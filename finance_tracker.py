@@ -81,8 +81,9 @@ def initialise_db(base_dir: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
 
 
 """
-Querying the Database
+Info Display
 """
+
 
 def display_month_report() -> None:
     """
@@ -91,6 +92,7 @@ def display_month_report() -> None:
         - records in tabular format
     """
     raise NotImplementedError
+
 
 def display_year_report() -> None:
     """
@@ -101,13 +103,15 @@ def display_year_report() -> None:
     """
     raise NotImplementedError
 
+
 def display_category_records() -> None:
     """
     Display income/expenditure for a given category
     """
     raise NotImplementedError
 
-def get_investment_summary() -> None:
+
+def display_investment_summary() -> None:
     """
     Display all current holdings, average buy price, current price, current value, profit, and profit percentage
     """
@@ -118,12 +122,74 @@ def get_investment_summary() -> None:
 Editing the Database
 """
 
-def insert_record() -> bool:
+
+def add_record(conn: sqlite3.Connection, cur: sqlite3.Cursor) -> bool:
     """
     Insert a record of income/expenditure to the database.
     Returns True if successful, False otherwise.
     """
-    raise NotImplementedError
+
+    def get_date_from_input() -> datetime.date:
+        """
+        Returns a datetime Date object.
+        Available formats:
+          - YYYY-(M)M-(D)D
+          - (M)M-(D)D          : current year
+          - (D)D               : current year and month
+        """
+        while True:
+            d: list = input("Date: ").split("-")
+
+            if d == [""]:
+                return datetime.date.today()
+
+            try:
+                # convert entered YYYY-MM-DD to integers
+                d = list(map(lambda s: int(s), d))
+                if len(d) == 1:
+                    d.insert(0, datetime.datetime.now().month)
+                if len(d) == 2:
+                    d.insert(0, datetime.datetime.now().year)
+                return datetime.date(d[0], d[1], d[2])
+
+            except ValueError:
+                print(
+                    (
+                        "Date must be valid, and in one of the following formats (blank for today):\n"
+                        " 1. YYYY-MM-DD\n"
+                        " 2. MM-DD (current year)\n"
+                        " 3. DD (current month and year)\n"
+                    )
+                )
+
+    def get_category_id() -> int:
+        """
+        Show all categories and their IDs, receive input and validate that it upholds referential integrity
+        """
+        while True:
+            try:
+                return int(input("Category ID: "))
+            except ValueError:
+                print("Category ID must be an integer.")
+
+    def get_amount() -> float:
+        while True:
+            try:
+                return float(input("Amount: "))
+            except ValueError:
+                print("Please enter a number.")
+
+    date: datetime.date = get_date_from_input()
+    category: int = get_category_id()
+    description: str = input("Description: ")
+    amount: float = get_amount()
+
+    # save to db
+    sql = "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)"
+    cur.execute(sql, (date, category, description, amount))
+    conn.commit()
+    return cur.rowcount > 0  # was the insertion successful?
+
 
 def delete_record() -> bool:
     """
@@ -132,12 +198,14 @@ def delete_record() -> bool:
     """
     raise NotImplementedError
 
+
 def edit_record() -> bool:
     """
     Edit a record of income/expenditure in the database.
     Returns True if successful, False otherwise.
     """
     raise NotImplementedError
+
 
 def create_category() -> bool:
     """
@@ -146,12 +214,14 @@ def create_category() -> bool:
     """
     raise NotImplementedError
 
+
 def edit_category() -> bool:
     """
     Edit the name of a category.
     Returns True if successful, False otherwise.
     """
     raise NotImplementedError
+
 
 def delete_category() -> bool:
     """
@@ -162,10 +232,51 @@ def delete_category() -> bool:
     """
     raise NotImplementedError
 
+
 """
 Main
 """
 
+
+def select_option() -> str:
+    return input(
+        (
+            "\nOptions:\n"
+            "a: Add record\n"
+            "r: Records (edit/delete)\n"
+            "c: Categories (add/edit/delete)\n"
+            "m: View monthly report\n"
+            "y: View annual report\n"
+            "q: quit\n"
+            ": "
+        )
+    ).lower()
+
+
 if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
     conn, cur = initialise_db(base_dir)
+
+    while True:
+        i = select_option()
+
+        match i:
+            case "a":
+                add_record(conn, cur)
+            case "v":
+                cur.execute("SELECT * FROM RECORD;")
+                rows = cur.fetchall()
+                print(rows)
+            case "r":
+                pass
+            case "c":
+                pass
+            case "m":
+                pass
+            case "y":
+                pass
+            case "q":
+                print("\nExiting...\n")
+                break
+            case _:
+                print("Invalid option entered.\n")
