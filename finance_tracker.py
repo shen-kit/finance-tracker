@@ -1,3 +1,4 @@
+import datetime
 import os
 import sqlite3
 
@@ -6,6 +7,7 @@ import yfinance as yf
 """
 Helper Functions
 """
+
 
 def get_stock_price(stock_code: str) -> float:
     """
@@ -18,34 +20,38 @@ def get_stock_price(stock_code: str) -> float:
     info = yf.Ticker(stock_code).info
     return (info["bid"] + info["ask"]) / 2
 
+
 """
 Database Initialisation
 """
+
 
 def initialise_db(base_dir: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
 
     def create_tables(cur: sqlite3.Cursor):
         cur.execute(
             """CREATE TABLE IF NOT EXISTS CATEGORY (
-            cat_id INT PRIMARY KEY,
-            cat_name   VARCHAR(30) NOT NULL);"""
+            cat_id     INTEGER        PRIMARY KEY,
+            cat_name   VARCHAR(30)    NOT NULL);
+            """
         )
         cur.execute(
             """CREATE TABLE IF NOT EXISTS RECORD (
-            rec_id   INT          PRIMARY KEY,
-            cat_id   INT          NOT NULL         DEFAULT "1",
+            rec_id   INTEGER      PRIMARY KEY,
+            cat_id   INTEGER      NOT NULL         DEFAULT "1",
             rec_date DATE         NOT NULL,
             rec_desc VARCHAR(100) NOT NULL,
-            rec_amt  INT          NOT NULL,
+            rec_amt  NUMBER(9,2)  NOT NULL,
             FOREIGN KEY (cat_id) REFERENCES CATEGORY (cat_id) ON UPDATE SET DEFAULT);"""
         )
         cur.execute(
             """CREATE TABLE IF NOT EXISTS INVESTMENT (
-            inv_id     INT        PRIMARY KEY,
+            inv_id     INTEGER    PRIMARY KEY,
             inv_code   VARCHAR(7) NOT NULL,
             inv_date   DATE       NOT NULL,
-            inv_price  INT        NOT NULL,
-            inv_qty    SMALLINT   NOT NULL);"""
+            inv_price  INTEGER    NOT NULL,
+            inv_qty    SMALLINT   NOT NULL);
+            """
         )
 
     def create_default_category(cur: sqlite3.Cursor):
@@ -53,7 +59,18 @@ def initialise_db(base_dir: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
         if cur.execute("SELECT * FROM CATEGORY;").fetchone() is None:
             cur.execute("INSERT INTO CATEGORY (cat_id, cat_name) VALUES (1, '-/-')")
 
-    conn = sqlite3.connect(os.path.join(base_dir, "database.db"))
+    # convert datetime.date into a string (YYYY-MM-DD) when storing
+    sqlite3.register_adapter(datetime.date, lambda d: d.isoformat())
+    # convert string into datetime.date when retrieving
+    sqlite3.register_converter(
+        "DATE", lambda s: datetime.date.fromisoformat(s.decode("utf-8"))
+    )
+
+    # PARSE_DECLTYPES matches declared types with their converter
+    # used for DATE -> datetime.date object conversion
+    conn = sqlite3.connect(
+        os.path.join(base_dir, "database.db"), detect_types=sqlite3.PARSE_DECLTYPES
+    )
     cur = conn.cursor()
 
     create_tables(cur)
