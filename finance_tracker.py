@@ -1,6 +1,20 @@
 import os
 import sqlite3
 
+import yfinance as yf
+
+
+def get_stock_price(stock_code) -> float:
+    """
+    Uses yfinance (yahoo finance backend) to get the most recent stock price.
+    Calculates stock price as the average of the bid and ask prices.
+    =======================
+    Inputs:
+        - stock_code (str): must reflect the stock code in yahoo finance
+    """
+    info = yf.Ticker(stock_code).info
+    return (info["bid"] + info["ask"]) / 2
+
 
 def initialise_db(base_dir):
 
