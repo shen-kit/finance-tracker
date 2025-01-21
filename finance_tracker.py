@@ -2,9 +2,8 @@ import datetime
 import os
 import sqlite3
 
-from tabulate import tabulate
-
 import yfinance as yf
+from tabulate import tabulate
 
 """
 Helper Functions
@@ -112,7 +111,7 @@ def display_category_records(cur: sqlite3.Cursor, cat_id) -> None:
     Format: | Date | Description | Amount |
     """
     sql = "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC;"
-    cur.execute(sql, (cat_id,));
+    cur.execute(sql, (cat_id,))
     res = cur.fetchall()
 
     s = tabulate(res, headers=["Date", "Description", "Amout"], tablefmt="grid")
@@ -125,6 +124,7 @@ def display_investment_summary() -> None:
     """
     raise NotImplementedError
 
+
 def display_categories(cur: sqlite3.Cursor) -> None:
     """
     Display a list of all categories next to their ID.
@@ -132,6 +132,7 @@ def display_categories(cur: sqlite3.Cursor) -> None:
     res = cur.execute("SELECT * FROM CATEGORY;")
     fmt = map(lambda x: f"{x[0]}: {x[1]}", res)
     print("\n".join(fmt))
+
 
 """
 Editing the Database
