@@ -79,13 +79,25 @@ class FinanceTracker:
     def define_options(self) -> tuple[dict[str, tuple], str]:
         "Returns the options, and the string to display what options are available"
         options = {
-            "a": ("Add Record", self.add_record),
-            "lr": ("List Records", self.list_records_for_category),
-            "lc": ("List Categories", self.list_categories),
-            "ac": ("Add Category", self.add_category),
-            "m": ("Show Month Report", lambda: None),
-            "y": ("Show Year Report", lambda: None),
-            "q": ("Quit", quit),
+            # create
+            "a":  ("Add Record",        self.add_record),
+            "ac": ("Add Category",      self.add_category),
+            "ai": ("Add Investment",    self.add_investment),
+            # read
+            "lr": ("List Records",      self.list_records_for_category),
+            "lc": ("List Categories",   self.list_categories),
+            "m":  ("Show Month Report", self.display_month_report),
+            "y":  ("Show Year Report",  self.display_year_report),
+            # update
+            "u":  ("Edit Record",       self.edit_record),
+            "uc": ("Edit Category",     self.edit_category),
+            "ui": ("Edit Investment",   self.edit_investment),
+            # delete
+            "d":  ("Delete Record",     self.delete_record),
+            "dc": ("Delete Category",   self.delete_category),
+            "di": ("Delete Investment", self.delete_investment),
+            # quit
+            "q":  ("Quit",              quit),
         }
         opt_str = (
             "What would you like to do?\n"
@@ -116,13 +128,13 @@ class FinanceTracker:
         date: datetime.date = self.get_date_from_input()
         category: int = self.get_category_id()
         description: str = input("Description: ")
-        amount: float = self.get_amount()
+        amount: float = self.get_float("Amount: ")
 
         # save to db
-        sql = (
-            "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)"
+        self.cur.execute(
+            "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)",
+            (date, category, description, amount),
         )
-        self.cur.execute(sql, (date, category, description, amount))
         self.conn.commit()
 
     def add_category(self) -> None:
@@ -134,7 +146,17 @@ class FinanceTracker:
         self.conn.commit()
 
     def add_investment(self) -> None:
-        raise NotImplementedError
+        date: datetime.date = self.get_date_from_input()
+        code: str           = input("Stock Code: ").upper()
+        qty: float          = self.get_float("Quantity: ")
+        price: float        = self.get_float("Unit Price: ")
+
+        # save to db
+        self.cur.execute(
+            "INSERT INTO INVESTMENT (inv_date, inv_code, inv_qty, inv_price) VALUES (?,?,?,?)",
+            (date, code, qty, price)
+        )
+        self.conn.commit()
 
     # Read
 
@@ -228,10 +250,10 @@ class FinanceTracker:
                 print("Category ID must be an integer.")
 
     @staticmethod
-    def get_amount() -> float:
+    def get_float(prompt: str) -> float:
         while True:
             try:
-                return float(input("Amount: "))
+                return float(input(prompt))
             except ValueError:
                 print("Please enter a number.")
 
