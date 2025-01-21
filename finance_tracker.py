@@ -1,20 +1,17 @@
 import datetime
 import os
+from sys import exit
 import sqlite3
 
 import yfinance as yf
 from tabulate import tabulate
-
-"""
-Helper Functions
-"""
 
 
 def get_stock_price(stock_code: str) -> float:
     """
     Uses yfinance (yahoo finance backend) to get the most recent stock price.
     Calculates stock price as the average of the bid and ask prices.
-    =======================
+
     Inputs:
         - stock_code (str): must reflect the stock code in yahoo finance
     """
@@ -22,12 +19,12 @@ def get_stock_price(stock_code: str) -> float:
     return (info["bid"] + info["ask"]) / 2
 
 
-"""
-Database Initialisation
-"""
-
-
 def initialise_db(base_dir: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
+    """
+    Create the database and required tables if not yet exists.
+    Return the database connection and cursor objects.
+    """
+    global conn, cur
 
     def create_tables(cur: sqlite3.Cursor):
         cur.execute(
@@ -68,7 +65,7 @@ def initialise_db(base_dir: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
     )
 
     # PARSE_DECLTYPES matches declared types with their converter
-    # used for DATE -> datetime.date object conversion
+    # used for DATE <-> datetime.date object conversion
     conn = sqlite3.connect(
         os.path.join(base_dir, "database.db"), detect_types=sqlite3.PARSE_DECLTYPES
     )
@@ -77,8 +74,6 @@ def initialise_db(base_dir: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
     create_tables(cur)
     create_default_category(cur)
     conn.commit()
-
-    return (conn, cur)
 
 
 """
@@ -258,53 +253,36 @@ def delete_category() -> bool:
 Main
 """
 
+def quit():
+    print("\nExiting...\n")
+    exit()
 
-def select_option() -> str:
+def main_loop() -> None:
 
-    options = [
-            ["a", "Add Record", add_record],
-            ["dc", "Display Categories", display_categories],
-            ["ac", "Add Category", add_category],
-            ]
+    options: dict[str, tuple[str, function]] = {
+        "a": ("Add Record", add_record),
+        "lr": ("List Records", display_category_records),
+        "lc": ("List Categories", display_categories),
+        "ac": ("Add Category", add_category),
+        "m": ("Show Month Report", display_month_report),
+        "y": ("Show Year Report", display_year_report),
+        "q": ("Quit", quit)
+    }
 
-    return input(
-        (
-            "\nOptions:\n"
-            "a: Add record\n"
-            "r: Records (edit/delete)\n"
-            "c: Categories (add/edit/delete)\n"
-            "m: View monthly report\n"
-            "y: View annual report\n"
-            "q: quit\n"
-            ": "
-        )
-    ).lower()
+    opt_str = "What would you like to do?\n"
+    opt_str += "\n".join(list(map(lambda t: f"{t[0]:>2} -> {t[1][0]}", options.items())))
+    opt_str += "\n: "
+
+    while True:
+        sel = input(opt_str).lower()
+        if sel not in options.keys():
+            print("Invalid option. Please try again.")
+            continue
+        options[sel][1]()
 
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
     conn, cur = initialise_db(base_dir)
 
-    while True:
-        i = select_option()
-
-        match i:
-            case "a":
-                add_record(conn, cur)
-            case "v":
-                cur.execute("SELECT * FROM RECORD;")
-                rows = cur.fetchall()
-                print(rows)
-            case "r":
-                pass
-            case "c":
-                display_category_records(cur, 0)
-            case "m":
-                pass
-            case "y":
-                pass
-            case "q":
-                print("\nExiting...\n")
-                break
-            case _:
-                print("Invalid option entered.\n")
+    main_loop()
