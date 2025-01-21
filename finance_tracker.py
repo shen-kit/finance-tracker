@@ -106,7 +106,7 @@ def display_year_report() -> None:
     raise NotImplementedError
 
 
-def display_category_records(conn: sqlite3.Connection, cur: sqlite3.Cursor, cat_id) -> None:
+def display_category_records(cur: sqlite3.Cursor, cat_id) -> None:
     """
     Display income/expenditure for a given category.
     Format: | Date | Description | Amount |
@@ -117,8 +117,6 @@ def display_category_records(conn: sqlite3.Connection, cur: sqlite3.Cursor, cat_
 
     s = tabulate(res, headers=["Date", "Description", "Amout"], tablefmt="grid")
     print(s)
-    
-    conn.commit()
 
 
 def display_investment_summary() -> None:
@@ -280,7 +278,7 @@ if __name__ == "__main__":
             case "r":
                 pass
             case "c":
-                display_category_records(conn, cur, 0)
+                display_category_records(cur, 0)
             case "m":
                 pass
             case "y":
