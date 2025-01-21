@@ -2,6 +2,8 @@ import datetime
 import os
 import sqlite3
 
+from tabulate import tabulate
+
 import yfinance as yf
 
 """
@@ -104,11 +106,19 @@ def display_year_report() -> None:
     raise NotImplementedError
 
 
-def display_category_records() -> None:
+def display_category_records(conn: sqlite3.Connection, cur: sqlite3.Cursor, cat_id) -> None:
     """
-    Display income/expenditure for a given category
+    Display income/expenditure for a given category.
+    Format: | Date | Description | Amount |
     """
-    raise NotImplementedError
+    sql = "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC;"
+    cur.execute(sql, (cat_id,));
+    res = cur.fetchall()
+
+    s = tabulate(res, headers=["Date", "Description", "Amout"], tablefmt="grid")
+    print(s)
+    
+    conn.commit()
 
 
 def display_investment_summary() -> None:
@@ -270,7 +280,7 @@ if __name__ == "__main__":
             case "r":
                 pass
             case "c":
-                pass
+                display_category_records(conn, cur, 0)
             case "m":
                 pass
             case "y":
