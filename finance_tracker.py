@@ -125,6 +125,13 @@ def display_investment_summary() -> None:
     """
     raise NotImplementedError
 
+def display_categories(cur: sqlite3.Cursor) -> None:
+    """
+    Display a list of all categories next to their ID.
+    """
+    res = cur.execute("SELECT * FROM CATEGORY;")
+    fmt = map(lambda x: f"{x[0]}: {x[1]}", res)
+    print("\n".join(fmt))
 
 """
 Editing the Database
@@ -174,9 +181,11 @@ def add_record(conn: sqlite3.Connection, cur: sqlite3.Cursor) -> bool:
         """
         Show all categories and their IDs, receive input and validate that it upholds referential integrity
         """
+        print("Category:")
+        display_categories(cur)
         while True:
             try:
-                return int(input("Category ID: "))
+                return int(input(": "))
             except ValueError:
                 print("Category ID must be an integer.")
 
