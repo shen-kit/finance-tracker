@@ -225,12 +225,15 @@ def edit_record() -> bool:
     raise NotImplementedError
 
 
-def create_category() -> bool:
+def add_category(conn: sqlite3.Connection, cur: sqlite3.Cursor) -> bool:
     """
     Create a new category.
     Returns True if successful, False otherwise.
     """
-    raise NotImplementedError
+    cname = input("New category name: ")
+    cur.execute("INSERT INTO CATEGORY (cat_name) VALUES (?)", (cname,))
+    conn.commit()
+    return cur.rowcount > 0  # was the insertion successful?
 
 
 def edit_category() -> bool:
@@ -257,6 +260,13 @@ Main
 
 
 def select_option() -> str:
+
+    options = [
+            ["a", "Add Record", add_record],
+            ["dc", "Display Categories", display_categories],
+            ["ac", "Add Category", add_category],
+            ]
+
     return input(
         (
             "\nOptions:\n"
