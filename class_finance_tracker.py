@@ -3,6 +3,7 @@ import os
 import sqlite3
 
 import yfinance as yf
+from pyfzf.pyfzf import FzfPrompt
 from tabulate import tabulate
 
 
@@ -80,24 +81,24 @@ class FinanceTracker:
         "Returns the options, and the string to display what options are available"
         options = {
             # create
-            "a":  ("Add Record",        self.add_record),
-            "ac": ("Add Category",      self.add_category),
-            "ai": ("Add Investment",    self.add_investment),
+            "a": ("Add Record", self.add_record),
+            "ac": ("Add Category", self.add_category),
+            "ai": ("Add Investment", self.add_investment),
             # read
-            "lr": ("List Records",      self.list_records_for_category),
-            "lc": ("List Categories",   self.list_categories),
-            "m":  ("Show Month Report", self.display_month_report),
-            "y":  ("Show Year Report",  self.display_year_report),
+            "lr": ("List Records", self.list_records_for_category),
+            "lc": ("List Categories", self.list_categories),
+            "m": ("Show Month Report", self.display_month_report),
+            "y": ("Show Year Report", self.display_year_report),
             # update
-            "u":  ("Edit Record",       self.edit_record),
-            "uc": ("Edit Category",     self.edit_category),
-            "ui": ("Edit Investment",   self.edit_investment),
+            "u": ("Edit Record", self.edit_record),
+            "uc": ("Edit Category", self.edit_category),
+            "ui": ("Edit Investment", self.edit_investment),
             # delete
-            "d":  ("Delete Record",     self.delete_record),
-            "dc": ("Delete Category",   self.delete_category),
+            "d": ("Delete Record", self.delete_record),
+            "dc": ("Delete Category", self.delete_category),
             "di": ("Delete Investment", self.delete_investment),
             # quit
-            "q":  ("Quit",              quit),
+            "q": ("Quit", quit),
         }
         opt_str = (
             "What would you like to do?\n"
@@ -147,14 +148,14 @@ class FinanceTracker:
 
     def add_investment(self) -> None:
         date: datetime.date = self.get_date_from_input()
-        code: str           = input("Stock Code: ").upper()
-        qty: float          = self.get_float("Quantity: ")
-        price: float        = self.get_float("Unit Price: ")
+        code: str = input("Stock Code: ").upper()
+        qty: float = self.get_float("Quantity: ")
+        price: float = self.get_float("Unit Price: ")
 
         # save to db
         self.cur.execute(
             "INSERT INTO INVESTMENT (inv_date, inv_code, inv_qty, inv_price) VALUES (?,?,?,?)",
-            (date, code, qty, price)
+            (date, code, qty, price),
         )
         self.conn.commit()
 
@@ -243,11 +244,7 @@ class FinanceTracker:
         Returns: a dictionary of {cat_id: cat_name}
         """
         res = self.cur.execute("SELECT * FROM CATEGORY;")
-        d = {}
-        for r in res:
-            d[r[0]] = r[1]
-        return d
-
+        return { r[0]:r[1] for r in res }
 
     """
     Helper Functions -> User Input
@@ -257,7 +254,7 @@ class FinanceTracker:
         """
         Show all categories and their IDs, request a category ID from the user and validate that it upholds referential integrity.
         """
-        self.list_categories()
+        categories = self.get_category_id()
         while True:
             try:
                 return int(input(": "))
