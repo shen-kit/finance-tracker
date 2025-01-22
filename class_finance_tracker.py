@@ -1,6 +1,7 @@
 import datetime
 import os
 import sqlite3
+from sys import exit
 
 import yfinance as yf
 from pyfzf.pyfzf import FzfPrompt
@@ -16,8 +17,16 @@ class FinanceTracker:
         self.options, self.opt_str = self.define_options()
 
     def main_loop(self) -> None:
-        while True:
-            self.select_action()()
+        try:
+            while True:
+                self.select_action()()
+        except KeyboardInterrupt:
+            self.quit()
+
+    def quit(self) -> None:
+        self.conn.close()
+        print("\n\nDatabase connection closed.\n")
+        exit(0)
 
     """
     Initialisation
@@ -80,7 +89,6 @@ class FinanceTracker:
     def define_options(self) -> tuple[dict[str, tuple], str]:
         "Returns the options, and the string to display what options are available"
         options = {
-            "t": ("testing", lambda: print(self.get_category_id())),
             # create
             "a": ("Add Record", self.add_record),
             "ac": ("Add Category", self.add_category),
@@ -99,7 +107,7 @@ class FinanceTracker:
             "dc": ("Delete Category", self.delete_category),
             "di": ("Delete Investment", self.delete_investment),
             # quit
-            "q": ("Quit", quit),
+            "q": ("Quit", self.quit),
         }
         opt_str = (
             "What would you like to do?\n"
@@ -127,6 +135,7 @@ class FinanceTracker:
         Insert a record of income/expenditure to the database.
         """
         try:
+            print("\nNew Record:")
             date: datetime.date = self.get_date_from_input()
             cat_id, cat_name = self.get_category()
             print(f"Category: {cat_name}")
@@ -149,6 +158,7 @@ class FinanceTracker:
         Create a new category.
         """
         try:
+            print("\nNew Category:")
             categories = self.get_categories().values()
             while True:
                 # store lowercase to prevent duplicates, can capitalise when displaying
@@ -164,6 +174,7 @@ class FinanceTracker:
 
     def add_investment(self) -> None:
         try:
+            print("\nNew Investment:")
             date: datetime.date = self.get_date_from_input()
             code: str = input("Stock Code: ").upper()
             qty: float = self.get_float("Quantity: ")
@@ -277,7 +288,7 @@ class FinanceTracker:
         categories = self.get_categories()
         names = categories.keys()
         try:
-            sel = FzfPrompt().prompt(names)[0]
+            sel = FzfPrompt().prompt(names, '--cycle')[0]
             return (categories[sel], sel)
         except IndexError: # if Ctrl+C is pressed during fzf selection
             raise KeyboardInterrupt
