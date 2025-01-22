@@ -80,6 +80,7 @@ class FinanceTracker:
     def define_options(self) -> tuple[dict[str, tuple], str]:
         "Returns the options, and the string to display what options are available"
         options = {
+            "t": ("testing", lambda: print(self.get_category_id())),
             # create
             "a": ("Add Record", self.add_record),
             "ac": ("Add Category", self.add_category),
@@ -239,12 +240,12 @@ class FinanceTracker:
     Helper Functions -> Database Queries
     """
 
-    def get_categories(self) -> dict[int, str]:
+    def get_categories(self) -> dict[str, int]:
         """
-        Returns: a dictionary of {cat_id: cat_name}
+        Returns: a dictionary of {cat_name: cat_id}
         """
         res = self.cur.execute("SELECT * FROM CATEGORY;")
-        return { r[0]:r[1] for r in res }
+        return {r[1]: r[0] for r in res}
 
     """
     Helper Functions -> User Input
@@ -254,12 +255,9 @@ class FinanceTracker:
         """
         Show all categories and their IDs, request a category ID from the user and validate that it upholds referential integrity.
         """
-        categories = self.get_category_id()
-        while True:
-            try:
-                return int(input(": "))
-            except ValueError:
-                print("Category ID must be an integer.")
+        categories = self.get_categories()
+        names = categories.keys()
+        return categories[FzfPrompt().prompt(names)[0]]
 
     @staticmethod
     def get_float(prompt: str) -> float:
