@@ -126,39 +126,58 @@ class FinanceTracker:
         """
         Insert a record of income/expenditure to the database.
         """
-        date: datetime.date = self.get_date_from_input()
-        cat_id, cat_name = self.get_category()
-        print(f"Category: {cat_name}")
-        description: str = input("Description: ")
-        amount: float = self.get_float("Amount: ")
+        try:
+            date: datetime.date = self.get_date_from_input()
+            cat_id, cat_name = self.get_category()
+            print(f"Category: {cat_name}")
+            description: str = input("Description: ")
+            amount: float = self.get_float("Amount: ")
 
-        # save to db
-        self.cur.execute(
-            "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)",
-            (date, cat_id, description, amount),
-        )
-        self.conn.commit()
+            # save to db
+            self.cur.execute(
+                "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)",
+                (date, cat_id, description, amount),
+            )
+            self.conn.commit()
+
+            print("Record saved.\n")
+        except KeyboardInterrupt:
+            print("\nNo changes saved.\n")
 
     def add_category(self) -> None:
         """
         Create a new category.
         """
-        cname = input("New category name: ")
-        self.cur.execute("INSERT INTO CATEGORY (cat_name) VALUES (?)", (cname,))
-        self.conn.commit()
+        try:
+            categories = self.get_categories().values()
+            while True:
+                # store lowercase to prevent duplicates, can capitalise when displaying
+                cname = input("New category name: ").lower() 
+                if cname not in categories:
+                    break
+                print("That category already exists!")
+            self.cur.execute("INSERT INTO CATEGORY (cat_name) VALUES (?)", (cname,))
+            self.conn.commit()
+            print("Category saved.\n")
+        except KeyboardInterrupt:
+            print("\nNo changes saved.\n")
 
     def add_investment(self) -> None:
-        date: datetime.date = self.get_date_from_input()
-        code: str = input("Stock Code: ").upper()
-        qty: float = self.get_float("Quantity: ")
-        price: float = self.get_float("Unit Price: ")
+        try:
+            date: datetime.date = self.get_date_from_input()
+            code: str = input("Stock Code: ").upper()
+            qty: float = self.get_float("Quantity: ")
+            price: float = self.get_float("Unit Price: ")
 
-        # save to db
-        self.cur.execute(
-            "INSERT INTO INVESTMENT (inv_date, inv_code, inv_qty, inv_price) VALUES (?,?,?,?)",
-            (date, code, qty, price),
-        )
-        self.conn.commit()
+            # save to db
+            self.cur.execute(
+                "INSERT INTO INVESTMENT (inv_date, inv_code, inv_qty, inv_price) VALUES (?,?,?,?)",
+                (date, code, qty, price),
+            )
+            self.conn.commit()
+            print("Investment saved.\n")
+        except KeyboardInterrupt:
+            print("\nNo changes saved.\n")
 
     # Read
 
@@ -176,11 +195,10 @@ class FinanceTracker:
         Format: | Date | Description | Amount |
         """
         cat_id, _ = self.get_category()
-        self.cur.execute(
+        res = self.cur.execute(
             "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC;",
             (cat_id,),
         )
-        res = self.cur.fetchall()
         print(tabulate(res, headers=["Date", "Description", "Amout"], tablefmt="grid"))
 
     def display_month_report(self) -> None:
@@ -258,8 +276,11 @@ class FinanceTracker:
         """
         categories = self.get_categories()
         names = categories.keys()
-        sel = FzfPrompt().prompt(names)[0]
-        return (categories[sel], sel)
+        try:
+            sel = FzfPrompt().prompt(names)[0]
+            return (categories[sel], sel)
+        except IndexError: # if Ctrl+C is pressed during fzf selection
+            raise KeyboardInterrupt
 
     @staticmethod
     def get_float(prompt: str) -> float:
