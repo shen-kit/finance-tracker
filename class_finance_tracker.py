@@ -170,7 +170,7 @@ class FinanceTracker:
 
     def list_records_for_category(self) -> None:
         """
-        Display income/expenditure for a given category.
+        Request a category id, then display records for the chosen category.
         Format: | Date | Description | Amount |
         """
         cat_id = self.get_category_id()
@@ -235,7 +235,22 @@ class FinanceTracker:
         raise NotImplementedError
 
     """
-    Helper Functions
+    Helper Functions -> Database Queries
+    """
+
+    def get_categories(self) -> dict[int, str]:
+        """
+        Returns: a dictionary of {cat_id: cat_name}
+        """
+        res = self.cur.execute("SELECT * FROM CATEGORY;")
+        d = {}
+        for r in res:
+            d[r[0]] = r[1]
+        return d
+
+
+    """
+    Helper Functions -> User Input
     """
 
     def get_category_id(self) -> int:
