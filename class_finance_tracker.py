@@ -126,16 +126,16 @@ class FinanceTracker:
         """
         Insert a record of income/expenditure to the database.
         """
-
         date: datetime.date = self.get_date_from_input()
-        category: int = self.get_category_id()
+        cat_id, cat_name = self.get_category()
+        print(f"Category: {cat_name}")
         description: str = input("Description: ")
         amount: float = self.get_float("Amount: ")
 
         # save to db
         self.cur.execute(
             "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)",
-            (date, category, description, amount),
+            (date, cat_id, description, amount),
         )
         self.conn.commit()
 
@@ -175,7 +175,7 @@ class FinanceTracker:
         Request a category id, then display records for the chosen category.
         Format: | Date | Description | Amount |
         """
-        cat_id = self.get_category_id()
+        cat_id, _ = self.get_category()
         self.cur.execute(
             "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC;",
             (cat_id,),
@@ -251,13 +251,15 @@ class FinanceTracker:
     Helper Functions -> User Input
     """
 
-    def get_category_id(self) -> int:
+    def get_category(self) -> tuple[int, str]:
         """
-        Show all categories and their IDs, request a category ID from the user and validate that it upholds referential integrity.
+        Use FZF to let the user select a category.
+        Return (id, name)
         """
         categories = self.get_categories()
         names = categories.keys()
-        return categories[FzfPrompt().prompt(names)[0]]
+        sel = FzfPrompt().prompt(names)[0]
+        return (categories[sel], sel)
 
     @staticmethod
     def get_float(prompt: str) -> float:
