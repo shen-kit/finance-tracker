@@ -134,61 +134,52 @@ class FinanceTracker:
         """
         Insert a record of income/expenditure to the database.
         """
-        try:
-            print("\nNew Record:")
-            date: datetime.date = self.get_date_from_input()
-            cat_id, cat_name = self.get_category()
-            print(f"Category: {cat_name}")
-            description: str = input("Description: ")
-            amount: float = self.get_float("Amount: ")
+        print("\nNew Record:")
+        date: datetime.date = self.get_date_from_input()
+        cat_id, cat_name = self.get_category()
+        print(f"Category: {cat_name}")
+        description: str = input("Description: ")
+        amount: float = self.get_float("Amount: ")
 
-            # save to db
-            self.cur.execute(
-                "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)",
-                (date, cat_id, description, amount),
-            )
-            self.conn.commit()
+        # save to db
+        self.cur.execute(
+            "INSERT INTO RECORD (rec_date, cat_id, rec_desc, rec_amt) VALUES (?,?,?,?)",
+            (date, cat_id, description, amount),
+        )
+        self.conn.commit()
 
-            print("Record saved.\n")
-        except KeyboardInterrupt:
-            print("\nNo changes saved.\n")
+        print("Record saved.\n")
 
     def add_category(self) -> None:
         """
         Create a new category.
         """
-        try:
-            print("\nNew Category:")
-            categories = self.get_categories().values()
-            while True:
-                # store lowercase to prevent duplicates, can capitalise when displaying
-                cname = input("New category name: ").lower() 
-                if cname not in categories:
-                    break
-                print("That category already exists!")
-            self.cur.execute("INSERT INTO CATEGORY (cat_name) VALUES (?)", (cname,))
-            self.conn.commit()
-            print("Category saved.\n")
-        except KeyboardInterrupt:
-            print("\nNo changes saved.\n")
+        print("\nNew Category:")
+        categories = self.get_categories().values()
+        while True:
+            # store lowercase to prevent duplicates, can capitalise when displaying
+            cname = input("New category name: ").lower() 
+            if cname not in categories:
+                break
+            print("That category already exists!")
+        self.cur.execute("INSERT INTO CATEGORY (cat_name) VALUES (?)", (cname,))
+        self.conn.commit()
+        print("Category saved.\n")
 
     def add_investment(self) -> None:
-        try:
-            print("\nNew Investment:")
-            date: datetime.date = self.get_date_from_input()
-            code: str = input("Stock Code: ").upper()
-            qty: float = self.get_float("Quantity: ")
-            price: float = self.get_float("Unit Price: ")
+        print("\nNew Investment:")
+        date: datetime.date = self.get_date_from_input()
+        code: str = input("Stock Code: ").upper()
+        qty: float = self.get_float("Quantity: ")
+        price: float = self.get_float("Unit Price: ")
 
-            # save to db
-            self.cur.execute(
-                "INSERT INTO INVESTMENT (inv_date, inv_code, inv_qty, inv_price) VALUES (?,?,?,?)",
-                (date, code, qty, price),
-            )
-            self.conn.commit()
-            print("Investment saved.\n")
-        except KeyboardInterrupt:
-            print("\nNo changes saved.\n")
+        # save to db
+        self.cur.execute(
+            "INSERT INTO INVESTMENT (inv_date, inv_code, inv_qty, inv_price) VALUES (?,?,?,?)",
+            (date, code, qty, price),
+        )
+        self.conn.commit()
+        print("Investment saved.\n")
 
     # Read
 
@@ -245,11 +236,11 @@ class FinanceTracker:
         raise NotImplementedError
 
     def edit_category(self) -> None:
-        cid, _ = self.get_category()
+        cid, oldname = self.get_category()
         newname = input("New category name: ").lower()
         self.cur.execute("UPDATE CATEGORY SET cat_name = ? WHERE cat_id = ?", (newname, cid))
         self.conn.commit()
-
+        print(f"Category '{oldname}' renamed to '{newname}'.\n")
 
     def edit_investment(self) -> None:
         raise NotImplementedError
@@ -264,7 +255,10 @@ class FinanceTracker:
         raise NotImplementedError
 
     def delete_category(self) -> None:
-        raise NotImplementedError
+        cid, cname = self.get_category()
+        self.cur.execute("DELETE FROM CATEGORY WHERE cat_id = ?;", (cid,))
+        self.conn.commit()
+        print(f"Category '{cname}' deleted.\n")
 
     def delete_investment(self) -> None:
         raise NotImplementedError
