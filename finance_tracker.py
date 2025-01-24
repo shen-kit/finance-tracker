@@ -105,7 +105,6 @@ class FinanceTracker:
     def define_options(self) -> tuple[dict[str, tuple], str]:
         "Returns the options, and the string to display what options are available"
         options = {
-                "t": ("test", self.get_investment),
             # create
             "a": ("Add Record", self.add_record),
             "ac": ("Add Category", self.add_category),
@@ -209,6 +208,7 @@ class FinanceTracker:
         """
         c = self.get_categories()
         fmt = map(lambda kv: f"{kv[1]}: {kv[0]}", c.items())
+        print("Categories:")
         print("\n".join(fmt))
 
     def list_records_for_category(self) -> None:
@@ -222,6 +222,7 @@ class FinanceTracker:
             "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC LIMIT ?;",
             (cat_id, limit),
         )
+        print("\nRecords:")
         print(tabulate(res, headers=["Date", "Description", "Amout"]))
 
     def list_investments(self) -> None:
@@ -229,6 +230,7 @@ class FinanceTracker:
         List all investments that have been made in table format
         """
         investments: list[Investment] = self.get_investments()
+        print("Investments:")
         print(
             tabulate(
                 [i.to_tuple() for i in investments],
@@ -258,13 +260,38 @@ class FinanceTracker:
         Display all current holdings, average buy price, current price, current value, profit, and profit percentage
         """
         # get [ code, qty, total_purchase_cost ]
-        res = self.cur.execute("SELECT inv_code, SUM(inv_qty), SUM(inv_qty * inv_price) FROM INVESTMENT GROUP BY inv_code;").fetchall()
+        res = self.cur.execute(
+            "SELECT inv_code, SUM(inv_qty), SUM(inv_qty * inv_price) FROM INVESTMENT GROUP BY inv_code;"
+        ).fetchall()
         table_data = []
         for r in res:
             unitprice = self.get_stock_price(r[0])
-            table_data.append([r[0], r[1], r[2] / r[1], r[2], unitprice, unitprice * r[1], unitprice*r[1]-r[2]])
-        print(tabulate(table_data, headers=['Code', 'Qty', 'Avg Buy', 'Buy Value', 'Curr Price', 'Curr Value', 'Profit/Loss'], floatfmt=".2f"))
-
+            table_data.append(
+                [
+                    r[0],  # code
+                    r[1],  # qty
+                    r[2] / r[1],  # avg buy price
+                    r[2],  # total buy price
+                    unitprice,  # current unit price
+                    unitprice * r[1],  # current value
+                    unitprice * r[1] - r[2],  # profit
+                ]
+            )
+        print(
+            tabulate(
+                table_data,
+                headers=[
+                    "Code",
+                    "Qty",
+                    "Avg Buy",
+                    "Buy Value",
+                    "Curr Price",
+                    "Curr Value",
+                    "Profit/Loss",
+                ],
+                floatfmt=".2f",
+            )
+        )
 
     # Update
 
@@ -341,7 +368,9 @@ class FinanceTracker:
         self.list_investments()
         while True:
             in_id = input("Investment ID: ")
-            res = self.cur.execute("SELECT * FROM INVESTMENT WHERE inv_id = ?", (in_id,)).fetchone()
+            res = self.cur.execute(
+                "SELECT * FROM INVESTMENT WHERE inv_id = ?", (in_id,)
+            ).fetchone()
             if res is not None:
                 return Investment(*res)
             print("Invalid selection.")
@@ -355,7 +384,7 @@ class FinanceTracker:
         while True:
             try:
                 inp = input(prompt)
-                if allow_blank and inp == '':
+                if allow_blank and inp == "":
                     return None
                 return int(inp)
             except ValueError:
