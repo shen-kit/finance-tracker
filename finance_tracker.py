@@ -67,7 +67,7 @@ class FinanceTracker:
                     rec_date DATE         NOT NULL,
                     rec_desc VARCHAR(100) NOT NULL,
                     rec_amt  NUMBER(9,2)  NOT NULL,
-                    FOREIGN KEY (cat_id)  CONSTRAINT catid_fk REFERENCES CATEGORY (cat_id) ON UPDATE SET DEFAULT
+                    FOREIGN KEY (cat_id)  REFERENCES CATEGORY (cat_id) ON UPDATE SET DEFAULT
                 );"""
             )
             cur.execute(
@@ -217,9 +217,10 @@ class FinanceTracker:
         Format: | Date | Description | Amount |
         """
         cat_id, _ = self.get_category()
+        limit = self.get_int("Number of records to show: ")
         res = self.cur.execute(
-            "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC;",
-            (cat_id,),
+            "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC LIMIT ?;",
+            (cat_id, limit),
         )
         print(tabulate(res, headers=["Date", "Description", "Amout"]))
 
@@ -344,6 +345,21 @@ class FinanceTracker:
             if res is not None:
                 return Investment(*res)
             print("Invalid selection.")
+
+    @staticmethod
+    def get_int(prompt: str, allow_blank=False) -> int | None:
+        """
+        Get an integer as input from the user.
+        If `allow_blank`, return `None` when no input is given.
+        """
+        while True:
+            try:
+                inp = input(prompt)
+                if allow_blank and inp == '':
+                    return None
+                return int(inp)
+            except ValueError:
+                print("Please enter an integer.")
 
     @staticmethod
     def get_float(prompt: str) -> float:
