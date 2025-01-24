@@ -196,8 +196,8 @@ class FinanceTracker:
         """
         Display a list of all categories next to their ID.
         """
-        res = self.cur.execute("SELECT * FROM CATEGORY;")
-        fmt = map(lambda x: f"{x[0]}: {x[1]}", res)
+        c = self.get_categories()
+        fmt = map(lambda kv: f"{kv[1]}: {kv[0]}", c.items())
         print("\n".join(fmt))
 
     def list_records_for_category(self) -> None:
@@ -245,7 +245,11 @@ class FinanceTracker:
         raise NotImplementedError
 
     def edit_category(self) -> None:
-        raise NotImplementedError
+        cid, _ = self.get_category()
+        newname = input("New category name: ").lower()
+        self.cur.execute("UPDATE CATEGORY SET cat_name = ? WHERE cat_id = ?", (newname, cid))
+        self.conn.commit()
+
 
     def edit_investment(self) -> None:
         raise NotImplementedError
