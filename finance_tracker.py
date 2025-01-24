@@ -56,27 +56,28 @@ class FinanceTracker:
         def create_tables(cur: sqlite3.Cursor):
             cur.execute(
                 """CREATE TABLE IF NOT EXISTS CATEGORY (
-                cat_id     INTEGER        PRIMARY KEY,
-                cat_name   VARCHAR(30)    NOT NULL);
-                """
+                    cat_id     INTEGER        PRIMARY KEY,
+                    cat_name   VARCHAR(30)    NOT NULL
+                ); """
             )
             cur.execute(
                 """CREATE TABLE IF NOT EXISTS RECORD (
-                rec_id   INTEGER      PRIMARY KEY,
-                cat_id   INTEGER      NOT NULL         DEFAULT "1",
-                rec_date DATE         NOT NULL,
-                rec_desc VARCHAR(100) NOT NULL,
-                rec_amt  NUMBER(9,2)  NOT NULL,
-                FOREIGN KEY (cat_id) REFERENCES CATEGORY (cat_id) ON UPDATE SET DEFAULT);"""
+                    rec_id   INTEGER      PRIMARY KEY,
+                    cat_id   INTEGER      NOT NULL         DEFAULT "1",
+                    rec_date DATE         NOT NULL,
+                    rec_desc VARCHAR(100) NOT NULL,
+                    rec_amt  NUMBER(9,2)  NOT NULL,
+                    FOREIGN KEY (cat_id)  CONSTRAINT catid_fk REFERENCES CATEGORY (cat_id) ON UPDATE SET DEFAULT
+                );"""
             )
             cur.execute(
                 """CREATE TABLE IF NOT EXISTS INVESTMENT (
-                inv_id     INTEGER    PRIMARY KEY,
-                inv_code   VARCHAR(7) NOT NULL,
-                inv_date   DATE       NOT NULL,
-                inv_price  INTEGER    NOT NULL,
-                inv_qty    SMALLINT   NOT NULL);
-                """
+                    inv_id     INTEGER    PRIMARY KEY,
+                    inv_code   VARCHAR(7) NOT NULL,
+                    inv_date   DATE       NOT NULL,
+                    inv_price  INTEGER    NOT NULL,
+                    inv_qty    SMALLINT   NOT NULL
+                );"""
             )
 
         def create_default_category(cur: sqlite3.Cursor):
