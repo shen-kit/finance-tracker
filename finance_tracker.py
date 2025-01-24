@@ -8,6 +8,18 @@ from pyfzf.pyfzf import FzfPrompt
 from tabulate import tabulate
 
 
+class Investment:
+    def __init__(self, id, code, date, price, qty) -> None:
+        self.id: int = id
+        self.code: str = code
+        self.date: datetime.date = date
+        self.price: float = price
+        self.qty: float = qty
+
+    def to_tuple(self) -> tuple[int, str, datetime.date, float, float]:
+        return (self.id, self.code, self.date, self.price, self.qty)
+
+
 class FinanceTracker:
 
     def __init__(self) -> None:
@@ -25,7 +37,7 @@ class FinanceTracker:
 
     def quit(self) -> None:
         self.conn.close()
-        print("\n\nDatabase connection closed.\n")
+        print("\nDatabase connection closed.\n")
         exit(0)
 
     """
@@ -96,6 +108,8 @@ class FinanceTracker:
             # read
             "lr": ("List Records", self.list_records_for_category),
             "lc": ("List Categories", self.list_categories),
+            "li": ("List Investments", self.list_investments),
+            "is": ("Show Investment Summary", self.display_investment_summary),
             "m": ("Show Month Report", self.display_month_report),
             "y": ("Show Year Report", self.display_year_report),
             # update
@@ -110,7 +124,7 @@ class FinanceTracker:
             "q": ("Quit", self.quit),
         }
         opt_str = (
-            "What would you like to do?\n"
+            "\nWhat would you like to do?\n"
             + "\n".join(list(map(lambda t: f"{t[0]:>2} -> {t[1][0]}", options.items())))
             + "\n: "
         )
@@ -122,6 +136,7 @@ class FinanceTracker:
             if sel not in self.options.keys():
                 print("Invalid option. Please try again.")
                 continue
+            print()
             return self.options[sel][1]
 
     """
@@ -134,7 +149,7 @@ class FinanceTracker:
         """
         Insert a record of income/expenditure to the database.
         """
-        print("\nNew Record:")
+        print("New Record:")
         date: datetime.date = self.get_date_from_input()
         cat_id, cat_name = self.get_category()
         print(f"Category: {cat_name}")
@@ -148,26 +163,26 @@ class FinanceTracker:
         )
         self.conn.commit()
 
-        print("Record saved.\n")
+        print("Record saved.")
 
     def add_category(self) -> None:
         """
         Create a new category.
         """
-        print("\nNew Category:")
+        print("New Category:")
         categories = self.get_categories().values()
         while True:
             # store lowercase to prevent duplicates, can capitalise when displaying
-            cname = input("New category name: ").lower() 
+            cname = input("New category name: ").lower()
             if cname not in categories:
                 break
             print("That category already exists!")
         self.cur.execute("INSERT INTO CATEGORY (cat_name) VALUES (?)", (cname,))
         self.conn.commit()
-        print("Category saved.\n")
+        print("Category saved.")
 
     def add_investment(self) -> None:
-        print("\nNew Investment:")
+        print("New Investment:")
         date: datetime.date = self.get_date_from_input()
         code: str = input("Stock Code: ").upper()
         qty: float = self.get_float("Quantity: ")
@@ -179,7 +194,7 @@ class FinanceTracker:
             (date, code, qty, price),
         )
         self.conn.commit()
-        print("Investment saved.\n")
+        print("Investment saved.")
 
     # Read
 
@@ -201,7 +216,19 @@ class FinanceTracker:
             "SELECT rec_date, rec_desc, rec_amt FROM RECORD WHERE cat_id = ? ORDER BY rec_date DESC;",
             (cat_id,),
         )
-        print(tabulate(res, headers=["Date", "Description", "Amout"], tablefmt="grid"))
+        print(tabulate(res, headers=["Date", "Description", "Amout"]))
+
+    def list_investments(self) -> None:
+        """
+        List all investments that have been made in table format
+        """
+        investments: list[Investment] = self.get_investments()
+        print(
+            tabulate(
+                [i.to_tuple() for i in investments],
+                headers=["ID", "Code", "Date", "Unit Price", "Qty"],
+            )
+        )
 
     def display_month_report(self) -> None:
         """
@@ -224,7 +251,14 @@ class FinanceTracker:
         """
         Display all current holdings, average buy price, current price, current value, profit, and profit percentage
         """
-        raise NotImplementedError
+        # get [ code, qty, total_purchase_cost ]
+        res = self.cur.execute("SELECT inv_code, SUM(inv_qty), SUM(inv_qty * inv_price) FROM INVESTMENT GROUP BY inv_code;").fetchall()
+        table_data = []
+        for r in res:
+            unitprice = self.get_stock_price(r[0])
+            table_data.append([r[0], r[1], r[2] / r[1], r[2], unitprice, unitprice * r[1], unitprice*r[1]-r[2]])
+        print(tabulate(table_data, headers=['Code', 'Qty', 'Avg Buy', 'Buy Value', 'Curr Price', 'Curr Value', 'Profit/Loss'], floatfmt=".2f"))
+
 
     # Update
 
@@ -238,9 +272,11 @@ class FinanceTracker:
     def edit_category(self) -> None:
         cid, oldname = self.get_category()
         newname = input("New category name: ").lower()
-        self.cur.execute("UPDATE CATEGORY SET cat_name = ? WHERE cat_id = ?", (newname, cid))
+        self.cur.execute(
+            "UPDATE CATEGORY SET cat_name = ? WHERE cat_id = ?", (newname, cid)
+        )
         self.conn.commit()
-        print(f"Category '{oldname}' renamed to '{newname}'.\n")
+        print(f"Category '{oldname}' renamed to '{newname}'.")
 
     def edit_investment(self) -> None:
         raise NotImplementedError
@@ -258,7 +294,7 @@ class FinanceTracker:
         cid, cname = self.get_category()
         self.cur.execute("DELETE FROM CATEGORY WHERE cat_id = ?;", (cid,))
         self.conn.commit()
-        print(f"Category '{cname}' deleted.\n")
+        print(f"Category '{cname}' deleted.")
 
     def delete_investment(self) -> None:
         raise NotImplementedError
@@ -274,6 +310,10 @@ class FinanceTracker:
         res = self.cur.execute("SELECT * FROM CATEGORY;")
         return {r[1]: r[0] for r in res}
 
+    def get_investments(self) -> list[Investment]:
+        res = self.cur.execute("SELECT * FROM INVESTMENT;")
+        return [Investment(*r) for r in res]
+
     """
     Helper Functions -> User Input
     """
@@ -286,10 +326,13 @@ class FinanceTracker:
         categories = self.get_categories()
         names = categories.keys()
         try:
-            sel = FzfPrompt().prompt(names, '--cycle')[0]
+            sel = FzfPrompt().prompt(names, "--cycle")[0]
             return (categories[sel], sel)
-        except IndexError: # if Ctrl+C is pressed during fzf selection
+        except IndexError:  # if Ctrl+C is pressed during fzf selection
             raise KeyboardInterrupt
+
+    def get_investment(self):
+        pass
 
     @staticmethod
     def get_float(prompt: str) -> float:
