@@ -16,8 +16,11 @@ class Investment:
         self.price: float = price
         self.qty: float = qty
 
-    def to_tuple(self) -> tuple[int, str, datetime.date, float, float]:
-        return (self.id, self.code, self.date, self.price, self.qty)
+    def to_tuple(self) -> tuple[int, datetime.date, str, float, float]:
+        return (self.id, self.date, self.code, self.price, self.qty)
+
+    def __str__(self):
+        return f"{self.id:2}:   {self.date.isoformat()}   {self.code:7}   {self.price:8.2f}   {self.qty}"
 
 
 class FinanceTracker:
@@ -25,7 +28,6 @@ class FinanceTracker:
     def __init__(self) -> None:
         base_dir = os.path.dirname(__file__)
         self.conn, self.cur = self.initialise_db(base_dir)
-
         self.options, self.opt_str = self.define_options()
 
     def main_loop(self) -> None:
@@ -33,7 +35,8 @@ class FinanceTracker:
             while True:
                 self.select_action()()
         except KeyboardInterrupt:
-            self.quit()
+            print()
+            self.main_loop()
 
     def quit(self) -> None:
         self.conn.close()
@@ -101,6 +104,7 @@ class FinanceTracker:
     def define_options(self) -> tuple[dict[str, tuple], str]:
         "Returns the options, and the string to display what options are available"
         options = {
+                "t": ("test", self.get_investment),
             # create
             "a": ("Add Record", self.add_record),
             "ac": ("Add Category", self.add_category),
@@ -226,7 +230,7 @@ class FinanceTracker:
         print(
             tabulate(
                 [i.to_tuple() for i in investments],
-                headers=["ID", "Code", "Date", "Unit Price", "Qty"],
+                headers=["ID", "Date", "Code", "Unit Price", "Qty"],
             )
         )
 
@@ -328,11 +332,17 @@ class FinanceTracker:
         try:
             sel = FzfPrompt().prompt(names, "--cycle")[0]
             return (categories[sel], sel)
-        except IndexError:  # if Ctrl+C is pressed during fzf selection
+        except IndexError:  # Ctrl+C pressed during selection
             raise KeyboardInterrupt
 
-    def get_investment(self):
-        pass
+    def get_investment(self) -> Investment:
+        self.list_investments()
+        while True:
+            in_id = input("Investment ID: ")
+            res = self.cur.execute("SELECT * FROM INVESTMENT WHERE inv_id = ?", (in_id,)).fetchone()
+            if res is not None:
+                return Investment(*res)
+            print("Invalid selection.")
 
     @staticmethod
     def get_float(prompt: str) -> float:
