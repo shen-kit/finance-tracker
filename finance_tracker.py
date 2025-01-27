@@ -8,7 +8,21 @@ from pyfzf.pyfzf import FzfPrompt
 from tabulate import tabulate
 
 
+class Record:
+
+    def __init__(self, id, cat_id, date, desc, amt) -> None:
+        self.id: int = id
+        self.cat_id: int = cat_id
+        self.date: datetime.date = date
+        self.desc: str = desc
+        self.amt: float = amt
+
+    def to_tuple(self) -> tuple[int, int, datetime.date, str, float]:
+        return (self.id, self.cat_id, self.date, self.desc, self.amt)
+
+
 class Investment:
+
     def __init__(self, id, code, date, price, qty) -> None:
         self.id: int = id
         self.code: str = code
