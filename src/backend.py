@@ -6,6 +6,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 from typing import override
 
+
 class Entity(ABC):
     @abstractmethod
     def to_tuple(self, include_id: bool) -> tuple:
@@ -155,39 +156,26 @@ class FinanceTracker:
 
     # insert data
 
-    def add_record(self) -> None:
-        """
-        Insert a record of income/expenditure to the database.
-        """
-        pass
-
-    def add_category(self) -> None:
-        """
-        Create a new category.
-        """
-        print("New Category:")
-        while True:
-            # store lowercase to prevent duplicates, can capitalise when displaying
-            cname = input("New category name: ").lower()
-            # name not in use
-            if (
-                self.cur.execute(
-                    "SELECT * FROM category WHERE cat_name = ?;", (cname,)
-                ).fetchone()
-                is None
-            ):
-                break
-            print("That category already exists!")
-
-        cdesc = input("Category description: ")
+    def add_record(self, record: Record) -> None:
         self.cur.execute(
-            "INSERT INTO CATEGORY (cat_name, cat_desc) VALUES (?, ?)", (cname, cdesc)
+            "INSERT INTO record (rec_date, rec_desc, cat_id, rec_amt), VALUES (?,?,?,?)",
+            record.to_tuple(False),
         )
         self.conn.commit()
-        print("Category saved.")
 
-    def add_investment(self) -> None:
-        pass
+    def add_category(self, category: Category) -> None:
+        self.cur.execute(
+            "INSERT INTO category (cat_name, cat_desc, cat_type), VALUES (?,?,?)",
+            category.to_tuple(False),
+        )
+        self.conn.commit()
+
+    def add_investment(self, investment: Investment) -> None:
+        self.cur.execute(
+            "INSERT INTO investment (inv_date, inv_code, inv_qty, inv_unitprice), VALUES (?,?,?,?)",
+            investment.to_tuple(False),
+        )
+        self.conn.commit()
 
     # getter helpers
 
@@ -320,5 +308,3 @@ if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(base_dir, "testing.db")
     ft = FinanceTracker(db_path)
-
-
