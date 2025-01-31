@@ -203,19 +203,33 @@ class FinanceTracker:
                  FROM investment
                  WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
                    AND inv_date BETWEEN ? AND ?
-                   AND inv_code LIKE %?%;
+                   AND inv_code LIKE ?;
                  """
-        res = self.cur.execute(sql, (min_cost, max_cost, start_date, end_date, code))
+        res = self.cur.execute(
+            sql, (min_cost, max_cost, start_date, end_date, "%" + code + "%")
+        )
         return list(map(Investment.from_list, res))
 
     def get_investments_summary(self):
         raise NotImplementedError
 
-    def get_categories(self) -> list[Category]:
-        raise NotImplementedError
+    def get_categories(self, ctype: int = 0) -> list[Category]:
+        """
+        Return a list of categories.
+        Input:
+            type (int): 0 for all, -1 for expenditure, 1 for income
+        """
+        sql = "SELECT (cat_id, cat_name, cat_desc, cat_type) FROM category"
+        match ctype:
+            case -1:
+                sql += " WHERE UPPER(cat_type) = 'E'"
+            case 1:
+                sql += " WHERE UPPER(cat_type) = 'I'"
+        res = self.cur.execute(sql + ";")
+        return list(map(Category.from_list, res))
 
     def get_records_recent(self, page: int) -> list[Record]:
-        sql = "SELECT (rec_id, rec_date, rec_desc, cat_id, rec_amt) FROM record ORDER BY rec_date DESC LIMIT ?, ?"
+        sql = "SELECT (rec_id, rec_date, rec_desc, cat_id, rec_amt) FROM record ORDER BY rec_date DESC LIMIT ?, ?;"
         res = self.cur.execute(
             sql,
             (
@@ -231,27 +245,22 @@ class FinanceTracker:
         min_cost: float = -99999999,
         max_cost: float = 99999999,
         start_date: dt.date = dt.date.fromordinal(1),
-        end_date: dt.date = dt.date(9999,12,31),
+        end_date: dt.date = dt.date(9999, 12, 31),
         desc: str = "",
         cat_id: int = -1,
     ) -> list[Record]:
-        if cat_id == -1:
-            sql = """SELECT * FROM record
-                     WHERE rec_amt BETWEEN ? AND ?
-                       AND rec_date BETWEEN ? AND ?
-                       AND rec_desc LIKE %?%;"""
-            res = self.cur.execute(
-                sql, (min_cost, max_cost, start_date, end_date, desc)
-            )
+        sql = """SELECT * FROM record
+                 WHERE rec_amt BETWEEN ? AND ?
+                   AND rec_date BETWEEN ? AND ?
+                   AND rec_desc LIKE ?
+                   AND cat_id """
+        if cat_id > 0:
+            sql += "= ?;"
         else:
-            sql = """SELECT * FROM record
-                     WHERE rec_amt BETWEEN ? AND ?
-                       AND rec_date BETWEEN ? AND ?
-                       AND rec_desc LIKE %?%
-                       AND cat_id = ?"""
-            res = self.cur.execute(
-                sql, (min_cost, max_cost, start_date, end_date, desc, cat_id)
-            )
+            sql += "> ?;"
+        res = self.cur.execute(
+            sql, (min_cost, max_cost, start_date, end_date, "%" + desc + "%", cat_id)
+        )
 
         return list(map(Record.from_list, res))
 
@@ -281,67 +290,14 @@ class FinanceTracker:
         return self.cur.fetchone()
 
 
-class UserInput:
-
-    @staticmethod
-    def get_int(prompt: str, allow_blank=False) -> int | None:
-        """
-        Get an integer as input from the user.
-        If `allow_blank`, return `None` when no input is given.
-        """
-        while True:
-            try:
-                inp = input(prompt)
-                if allow_blank and inp == "":
-                    return None
-                return int(inp)
-            except ValueError:
-                print("Please enter an integer.")
-
-    @staticmethod
-    def get_float(prompt: str) -> float:
-        while True:
-            try:
-                return float(input(prompt))
-            except ValueError:
-                print("Please enter a number.")
-
-    @staticmethod
-    def get_date() -> dt.date:
-        """
-        Returns a datetime Date object.
-        Available formats:
-          - YYYY-(M)M-(D)D
-          - (M)M-(D)D          : current year
-          - (D)D               : current year and month
-        """
-        while True:
-            d: list = input("Date: ").split("-")
-
-            if d == [""]:
-                return dt.date.today()
-
-            try:
-                # convert entered YYYY-MM-DD to integers
-                d = list(map(lambda s: int(s), d))
-                if len(d) == 1:
-                    d.insert(0, dt.datetime.now().month)
-                if len(d) == 2:
-                    d.insert(0, dt.datetime.now().year)
-                return dt.date(d[0], d[1], d[2])
-
-            except ValueError:
-                print(
-                    (
-                        "Date must be valid, and in one of the following formats (blank for today):\n"
-                        " 1. YYYY-MM-DD\n"
-                        " 2. MM-DD (current year)\n"
-                        " 3. DD (current month and year)\n"
-                    )
-                )
-
-
 if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(base_dir, "testing.db")
     ft = FinanceTracker(db_path)
+    funcs = [
+        ft.get_categories,
+        ft.get_records_filter,
+        ft.get_investments_filter,
+    ]
+    for f in funcs:
+        print(f())
