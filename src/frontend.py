@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, Vertical
 from textual.events import Key
 from textual.screen import ModalScreen, Screen
 from textual.widget import Widget
@@ -60,9 +60,9 @@ class CategoriesScreen(Screen):
     def __init__(self):
         super().__init__()
         self.categories = [
-            Category(1, "cat1", "category description 1"),
-            Category(2, "cat2", "category description 2"),
-            Category(3, "cat3", "category description 3"),
+            Category(1, "cat1", "category description 1", "I"),
+            Category(2, "cat2", "category description 2", "E"),
+            Category(3, "cat3", "category description 3", "E"),
         ]
 
     def compose(self) -> ComposeResult:
@@ -100,6 +100,7 @@ class FTApp(App):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.item.id is not None:
             self.push_screen(event.item.id)
+
 
 if __name__ == "__main__":
     app = FTApp()
