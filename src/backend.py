@@ -6,7 +6,6 @@ import sqlite3
 from abc import ABC, abstractmethod
 from typing import override
 
-
 class Entity(ABC):
     @abstractmethod
     def to_tuple(self, include_id: bool) -> tuple:
@@ -101,6 +100,8 @@ class FinanceTracker:
         self.conn, self.cur = self.connect_to_db(db_path)
         self.initialise_db()
 
+    # database connection management
+
     def connect_to_db(self, db_path) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
         """
         Establish a database connection, return the connection and the cursor.
@@ -124,7 +125,9 @@ class FinanceTracker:
             """
                 CREATE TABLE IF NOT EXISTS category (
                     cat_id   INTEGER     NOT NULL  PRIMARY KEY,
-                    cat_name VARCHAR(30) NOT NULL
+                    cat_name VARCHAR(20) NOT NULL,
+                    cat_type CHAR(1)     NOT NULL  CHECK (cat_type IN ('I', 'E')),
+                    cat_desc VARCHAR(40)
                 );
 
                 CREATE TABLE IF NOT EXISTS record (
@@ -149,6 +152,42 @@ class FinanceTracker:
     def close_db(self):
         self.conn.close()
         print("\nDatabase connection closed.\n")
+
+    # insert data
+
+    def add_record(self) -> None:
+        """
+        Insert a record of income/expenditure to the database.
+        """
+        pass
+
+    def add_category(self) -> None:
+        """
+        Create a new category.
+        """
+        print("New Category:")
+        while True:
+            # store lowercase to prevent duplicates, can capitalise when displaying
+            cname = input("New category name: ").lower()
+            # name not in use
+            if (
+                self.cur.execute(
+                    "SELECT * FROM category WHERE cat_name = ?;", (cname,)
+                ).fetchone()
+                is None
+            ):
+                break
+            print("That category already exists!")
+
+        cdesc = input("Category description: ")
+        self.cur.execute(
+            "INSERT INTO CATEGORY (cat_name, cat_desc) VALUES (?, ?)", (cname, cdesc)
+        )
+        self.conn.commit()
+        print("Category saved.")
+
+    def add_investment(self) -> None:
+        pass
 
     # getter helpers
 
@@ -212,10 +251,74 @@ class FinanceTracker:
     def get_category_sum(
         self, cat_id: int, start_date: dt.date, end_date: dt.date
     ) -> float:
-        raise NotImplementedError
+        sql = "SELECT SUM(rec_amt) FROM record WHERE cat_id = ? AND rec_date >= ? AND rec_date <= ?;"
+        self.cur.execute(sql, (cat_id, start_date, end_date))
+        return self.cur.fetchone()
+
+
+class UserInput:
+
+    @staticmethod
+    def get_int(prompt: str, allow_blank=False) -> int | None:
+        """
+        Get an integer as input from the user.
+        If `allow_blank`, return `None` when no input is given.
+        """
+        while True:
+            try:
+                inp = input(prompt)
+                if allow_blank and inp == "":
+                    return None
+                return int(inp)
+            except ValueError:
+                print("Please enter an integer.")
+
+    @staticmethod
+    def get_float(prompt: str) -> float:
+        while True:
+            try:
+                return float(input(prompt))
+            except ValueError:
+                print("Please enter a number.")
+
+    @staticmethod
+    def get_date() -> dt.date:
+        """
+        Returns a datetime Date object.
+        Available formats:
+          - YYYY-(M)M-(D)D
+          - (M)M-(D)D          : current year
+          - (D)D               : current year and month
+        """
+        while True:
+            d: list = input("Date: ").split("-")
+
+            if d == [""]:
+                return dt.date.today()
+
+            try:
+                # convert entered YYYY-MM-DD to integers
+                d = list(map(lambda s: int(s), d))
+                if len(d) == 1:
+                    d.insert(0, dt.datetime.now().month)
+                if len(d) == 2:
+                    d.insert(0, dt.datetime.now().year)
+                return dt.date(d[0], d[1], d[2])
+
+            except ValueError:
+                print(
+                    (
+                        "Date must be valid, and in one of the following formats (blank for today):\n"
+                        " 1. YYYY-MM-DD\n"
+                        " 2. MM-DD (current year)\n"
+                        " 3. DD (current month and year)\n"
+                    )
+                )
 
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(base_dir, "testing.db")
     ft = FinanceTracker(db_path)
+
+
