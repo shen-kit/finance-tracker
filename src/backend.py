@@ -75,7 +75,9 @@ class Category(Entity):
     def __init__(self, id, name, desc, ctype) -> None:
         super().__init__()
         if ctype not in ("I", "E"):
-            raise Exception(f"Category type must be 'I' or 'E'. '{ctype}' was supplied.")
+            raise Exception(
+                f"Category type must be 'I' or 'E'. '{ctype}' was supplied."
+            )
         self.id: int | None = id
         self.name: str = name
         self.desc: str = desc
@@ -161,7 +163,7 @@ class FinanceTracker:
 
     def add_record(self, record: Record) -> None:
         self.cur.execute(
-            "INSERT INTO record (rec_date, rec_desc, cat_id, rec_amt) VALUES (?,?,?,?)",
+            "INSERT INTO record (rec_date, rec_desc, rec_amt, cat_id) VALUES (?,?,?,?)",
             record.to_tuple(False),
         )
         self.conn.commit()
@@ -271,10 +273,10 @@ class FinanceTracker:
         sql = """SELECT SUM(rec_amt)
                     FROM record
                     WHERE cat_id IN (SELECT cat_id FROM category WHERE UPPER(cat_type) = 'I')
-                      AND rec_date >= ? AND rec_date <= ?;
+                      AND rec_date BETWEEN ? AND ?;
                 """
         self.cur.execute(sql, (start_date, end_date))
-        return self.cur.fetchone()
+        return self.cur.fetchone()[0]
 
     def get_expenditure_sum(self, start_date: dt.date, end_date: dt.date) -> float:
         sql = """SELECT SUM(rec_amt)
@@ -283,14 +285,14 @@ class FinanceTracker:
                       AND rec_date >= ? AND rec_date <= ?;
                 """
         self.cur.execute(sql, (start_date, end_date))
-        return self.cur.fetchone()
+        return self.cur.fetchone()[0]
 
     def get_category_sum(
         self, cat_id: int, start_date: dt.date, end_date: dt.date
     ) -> float:
         sql = "SELECT SUM(rec_amt) FROM record WHERE cat_id = ? AND rec_date >= ? AND rec_date <= ?;"
         self.cur.execute(sql, (cat_id, start_date, end_date))
-        return self.cur.fetchone()
+        return self.cur.fetchone()[0]
 
 
 def create_dummy_data(ft: FinanceTracker):
@@ -300,14 +302,14 @@ def create_dummy_data(ft: FinanceTracker):
     ft.add_category(Category(None, "cat3", "cat desc 3", "E"))
 
     # investments
-    ft.add_investment(Investment(None, dt.date(2024,1,1), "IVV", 5, 600))
-    ft.add_investment(Investment(None, dt.date(2024,6,1), "VGS", 8, 700))
-    ft.add_investment(Investment(None, dt.date(2025,1,1), "IVV", 15, 400))
+    ft.add_investment(Investment(None, dt.date(2024, 1, 1), "IVV", 5, 600))
+    ft.add_investment(Investment(None, dt.date(2024, 6, 1), "VGS", 8, 700))
+    ft.add_investment(Investment(None, dt.date(2025, 1, 1), "IVV", 15, 400))
 
     # records
-    ft.add_record(Record(None, dt.date(2024,1,1), "record 1", -50, 2))
-    ft.add_record(Record(None, dt.date(2025,1,1), "record 2", -10, 2))
-    ft.add_record(Record(None, dt.date(2025,1,10), "record 3", 500, 1))
+    ft.add_record(Record(None, dt.date(2024, 1, 1), "record 1", -50, 2))
+    ft.add_record(Record(None, dt.date(2025, 1, 1), "record 2", -10, 2))
+    ft.add_record(Record(None, dt.date(2025, 1, 10), "record 3", 500, 1))
 
 
 if __name__ == "__main__":
@@ -315,11 +317,13 @@ if __name__ == "__main__":
     db_path = os.path.join(base_dir, "testing.db")
     ft = FinanceTracker(db_path)
 
-    print(ft.get_investments_recent(0))
-    print(ft.get_investments_filter())
-    print(ft.get_categories())
-    print(ft.get_records_recent(0))
-    print(ft.get_records_filter())
-    print(ft.get_income_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1)))
-    print(ft.get_expenditure_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1)))
-    print(ft.get_category_sum(1, dt.date(2023, 1, 1), dt.date(2030, 1, 1)))
+    # create_dummy_data(ft)
+
+    print("get_investments_recent: " + str(ft.get_investments_recent(0)))
+    print("get_investments_filter: " + str(ft.get_investments_filter()))
+    print("get_categories: " + str(ft.get_categories()))
+    print("get_records_recent: " + str(ft.get_records_recent(0)))
+    print("get_records_filter: " + str(ft.get_records_filter()))
+    print("get_income_sum: " + str(ft.get_income_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
+    print("get_expenditure_sum: " + str(ft.get_expenditure_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
+    print("get_category_sum: " + str(ft.get_category_sum(1, dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
