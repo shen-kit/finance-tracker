@@ -46,6 +46,9 @@ class Record(Entity):
     def from_list(cls, l: list) -> Record:
         return Record(*l)
 
+    @override
+    def __repr__(self) -> str:
+        return f"Record ({self.id}, {self.date}, {self.desc}, ${self.amt:.2f}, {self.cat_id})"
 
 class Investment(Entity):
 
@@ -68,6 +71,10 @@ class Investment(Entity):
     @classmethod
     def from_list(cls, l: list) -> Investment:
         return Investment(*l)
+
+    @override
+    def __repr__(self) -> str:
+        return f"Investment ({self.id}, {self.date}, {self.code}, {self.qty} x ${self.unit_price:.2f})"
 
 
 class Category(Entity):
@@ -94,6 +101,10 @@ class Category(Entity):
     @classmethod
     def from_list(cls, l: list) -> Category:
         return Category(*l)
+
+    @override
+    def __repr__(self) -> str:
+        return f"Category ({self.id}, {self.name}, {self.desc}, {self.ctype})"
 
 
 class FinanceTracker:
@@ -140,8 +151,8 @@ class FinanceTracker:
                     rec_id   INTEGER     NOT NULL  PRIMARY KEY,
                     rec_date DATE        NOT NULL,
                     rec_desc VARCHAR(50) NOT NULL,
-                    cat_id   INTEGER     NOT NULL,  
                     rec_amt  NUMBER(7,2) NOT NULL,
+                    cat_id   INTEGER     NOT NULL,  
                     CONSTRAINT category_record_fk FOREIGN KEY (cat_id) REFERENCES category (cat_id) ON UPDATE CASCADE ON DELETE SET NULL
                 );
 
@@ -234,7 +245,7 @@ class FinanceTracker:
         return list(map(Category.from_list, res))
 
     def get_records_recent(self, page: int) -> list[Record]:
-        sql = "SELECT rec_id, rec_date, rec_desc, cat_id, rec_amt FROM record ORDER BY rec_date DESC LIMIT ?, ?;"
+        sql = "SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id FROM record ORDER BY rec_date DESC LIMIT ?, ?;"
         res = self.cur.execute(
             sql,
             (
@@ -321,9 +332,9 @@ if __name__ == "__main__":
 
     print("get_investments_recent: " + str(ft.get_investments_recent(0)))
     print("get_investments_filter: " + str(ft.get_investments_filter()))
-    print("get_categories: " + str(ft.get_categories()))
-    print("get_records_recent: " + str(ft.get_records_recent(0)))
-    print("get_records_filter: " + str(ft.get_records_filter()))
-    print("get_income_sum: " + str(ft.get_income_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
-    print("get_expenditure_sum: " + str(ft.get_expenditure_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
-    print("get_category_sum: " + str(ft.get_category_sum(1, dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
+    print("get_categories        : " + str(ft.get_categories()))
+    print("get_records_recent    : " + str(ft.get_records_recent(0)))
+    print("get_records_filter    : " + str(ft.get_records_filter()))
+    print("get_income_sum        : " + str(ft.get_income_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
+    print("get_expenditure_sum   : " + str(ft.get_expenditure_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
+    print("get_category_sum      : " + str(ft.get_category_sum(1, dt.date(2023, 1, 1), dt.date(2030, 1, 1))))
