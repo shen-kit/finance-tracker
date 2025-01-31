@@ -193,13 +193,20 @@ class FinanceTracker:
     def get_investments_filter(
         self,
         *,
-        min_cost: float,
-        max_cost: float,
-        start_date: dt.date,
-        end_date: dt.date,
-        code: str,
+        min_cost: float = -999999999,
+        max_cost: float = 999999999,
+        start_date: dt.date = dt.date.fromordinal(1),
+        end_date: dt.date = dt.date(9999, 12, 31),
+        code: str = "",
     ) -> list[Investment]:
-        raise NotImplementedError
+        sql = """SELECT *
+                 FROM investment
+                 WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
+                   AND inv_date BETWEEN ? AND ?
+                   AND inv_code LIKE %?%;
+                 """
+        res = self.cur.execute(sql, (min_cost, max_cost, start_date, end_date, code))
+        return list(map(Investment.from_list, res))
 
     def get_investments_summary(self):
         raise NotImplementedError
@@ -221,20 +228,50 @@ class FinanceTracker:
     def get_records_filter(
         self,
         *,
-        min_cost: float,
-        max_cost: float,
-        start: dt.date,
-        end: dt.date,
-        desc: str,
-        cat_id: int,
+        min_cost: float = -99999999,
+        max_cost: float = 99999999,
+        start_date: dt.date = dt.date.fromordinal(1),
+        end_date: dt.date = dt.date(9999,12,31),
+        desc: str = "",
+        cat_id: int = -1,
     ) -> list[Record]:
-        raise NotImplementedError
+        if cat_id == -1:
+            sql = """SELECT * FROM record
+                     WHERE rec_amt BETWEEN ? AND ?
+                       AND rec_date BETWEEN ? AND ?
+                       AND rec_desc LIKE %?%;"""
+            res = self.cur.execute(
+                sql, (min_cost, max_cost, start_date, end_date, desc)
+            )
+        else:
+            sql = """SELECT * FROM record
+                     WHERE rec_amt BETWEEN ? AND ?
+                       AND rec_date BETWEEN ? AND ?
+                       AND rec_desc LIKE %?%
+                       AND cat_id = ?"""
+            res = self.cur.execute(
+                sql, (min_cost, max_cost, start_date, end_date, desc, cat_id)
+            )
+
+        return list(map(Record.from_list, res))
 
     def get_income_sum(self, start_date: dt.date, end_date: dt.date) -> float:
-        raise NotImplementedError
+        sql = """SELECT SUM(rec_amt)
+                    FROM record
+                    WHERE cat_id IN (SELECT cat_id FROM category WHERE UPPER(cat_type) = 'I')
+                      AND rec_date >= ? AND rec_date <= ?;
+                """
+        self.cur.execute(sql, (start_date, end_date))
+        return self.cur.fetchone()
 
     def get_expenditure_sum(self, start_date: dt.date, end_date: dt.date) -> float:
-        raise NotImplementedError
+        sql = """SELECT SUM(rec_amt)
+                    FROM record
+                    WHERE cat_id IN (SELECT cat_id FROM category WHERE UPPER(cat_type) = 'E')
+                      AND rec_date >= ? AND rec_date <= ?;
+                """
+        self.cur.execute(sql, (start_date, end_date))
+        return self.cur.fetchone()
 
     def get_category_sum(
         self, cat_id: int, start_date: dt.date, end_date: dt.date
