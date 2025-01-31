@@ -28,7 +28,7 @@ class Record(Entity):
 
     def __init__(self, id, date, desc, amt, cat_id) -> None:
         super().__init__()
-        self.id: int = id
+        self.id: int | None = id
         self.date: dt.date = date
         self.desc: str = desc
         self.amt: float = amt
@@ -51,7 +51,7 @@ class Investment(Entity):
 
     def __init__(self, id, date, code, qty, unit_price) -> None:
         super().__init__()
-        self.id: int = id
+        self.id: int | None = id
         self.date: dt.date = date
         self.code: str = code
         self.qty: int = qty
@@ -72,18 +72,21 @@ class Investment(Entity):
 
 class Category(Entity):
 
-    def __init__(self, id, name, desc) -> None:
+    def __init__(self, id, name, desc, ctype) -> None:
         super().__init__()
-        self.id: int = id
+        if ctype not in ("I", "E"):
+            raise Exception(f"Category type must be 'I' or 'E'. '{ctype}' was supplied.")
+        self.id: int | None = id
         self.name: str = name
         self.desc: str = desc
+        self.ctype: str = ctype
 
     @override
     def to_tuple(self, include_id: bool) -> tuple:
         if include_id:
-            return (self.id, self.name, self.desc)
+            return (self.id, self.name, self.desc, self.ctype)
         else:
-            return (self.name, self.desc)
+            return (self.name, self.desc, self.ctype)
 
     @override
     @classmethod
@@ -158,21 +161,21 @@ class FinanceTracker:
 
     def add_record(self, record: Record) -> None:
         self.cur.execute(
-            "INSERT INTO record (rec_date, rec_desc, cat_id, rec_amt), VALUES (?,?,?,?)",
+            "INSERT INTO record (rec_date, rec_desc, cat_id, rec_amt) VALUES (?,?,?,?)",
             record.to_tuple(False),
         )
         self.conn.commit()
 
     def add_category(self, category: Category) -> None:
         self.cur.execute(
-            "INSERT INTO category (cat_name, cat_desc, cat_type), VALUES (?,?,?)",
+            "INSERT INTO category (cat_name, cat_desc, cat_type) VALUES (?,?,?)",
             category.to_tuple(False),
         )
         self.conn.commit()
 
     def add_investment(self, investment: Investment) -> None:
         self.cur.execute(
-            "INSERT INTO investment (inv_date, inv_code, inv_qty, inv_unitprice), VALUES (?,?,?,?)",
+            "INSERT INTO investment (inv_date, inv_code, inv_qty, inv_unitprice) VALUES (?,?,?,?)",
             investment.to_tuple(False),
         )
         self.conn.commit()
@@ -180,7 +183,7 @@ class FinanceTracker:
     # getter helpers
 
     def get_investments_recent(self, page: int) -> list[Investment]:
-        sql = "SELECT (inv_id, inv_date, inv_code, inv_qty, inv_unitprice) FROM investment ORDER BY inv_date DESC LIMIT ?, ?"
+        sql = "SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice FROM investment ORDER BY inv_date DESC LIMIT ?, ?;"
         res = self.cur.execute(
             sql,
             (
@@ -219,7 +222,7 @@ class FinanceTracker:
         Input:
             type (int): 0 for all, -1 for expenditure, 1 for income
         """
-        sql = "SELECT (cat_id, cat_name, cat_desc, cat_type) FROM category"
+        sql = "SELECT cat_id, cat_name, cat_desc, cat_type FROM category"
         match ctype:
             case -1:
                 sql += " WHERE UPPER(cat_type) = 'E'"
@@ -229,7 +232,7 @@ class FinanceTracker:
         return list(map(Category.from_list, res))
 
     def get_records_recent(self, page: int) -> list[Record]:
-        sql = "SELECT (rec_id, rec_date, rec_desc, cat_id, rec_amt) FROM record ORDER BY rec_date DESC LIMIT ?, ?;"
+        sql = "SELECT rec_id, rec_date, rec_desc, cat_id, rec_amt FROM record ORDER BY rec_date DESC LIMIT ?, ?;"
         res = self.cur.execute(
             sql,
             (
@@ -290,14 +293,33 @@ class FinanceTracker:
         return self.cur.fetchone()
 
 
+def create_dummy_data(ft: FinanceTracker):
+    # categories
+    ft.add_category(Category(None, "cat1", "cat desc 1", "I"))
+    ft.add_category(Category(None, "cat2", "cat desc 2", "E"))
+    ft.add_category(Category(None, "cat3", "cat desc 3", "E"))
+
+    # investments
+    ft.add_investment(Investment(None, dt.date(2024,1,1), "IVV", 5, 600))
+    ft.add_investment(Investment(None, dt.date(2024,6,1), "VGS", 8, 700))
+    ft.add_investment(Investment(None, dt.date(2025,1,1), "IVV", 15, 400))
+
+    # records
+    ft.add_record(Record(None, dt.date(2024,1,1), "record 1", -50, 2))
+    ft.add_record(Record(None, dt.date(2025,1,1), "record 2", -10, 2))
+    ft.add_record(Record(None, dt.date(2025,1,10), "record 3", 500, 1))
+
+
 if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(base_dir, "testing.db")
     ft = FinanceTracker(db_path)
-    funcs = [
-        ft.get_categories,
-        ft.get_records_filter,
-        ft.get_investments_filter,
-    ]
-    for f in funcs:
-        print(f())
+
+    print(ft.get_investments_recent(0))
+    print(ft.get_investments_filter())
+    print(ft.get_categories())
+    print(ft.get_records_recent(0))
+    print(ft.get_records_filter())
+    print(ft.get_income_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1)))
+    print(ft.get_expenditure_sum(dt.date(2023, 1, 1), dt.date(2030, 1, 1)))
+    print(ft.get_category_sum(1, dt.date(2023, 1, 1), dt.date(2030, 1, 1)))
