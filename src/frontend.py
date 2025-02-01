@@ -62,6 +62,10 @@ class AddCategoryScreen(Screen):
 
 class CategoriesScreen(Screen):
 
+    BINDINGS = [
+        ("a", "app.push_screen('add_category')", "Add Category"),
+    ]
+
     def __init__(self):
         super().__init__()
         self.categories = [
@@ -107,7 +111,7 @@ class FTApp(App):
             ),
             VerticalGroup(
                 FocusableLabel("Record"),
-                FocusableLabel("Categories"),
+                FocusableLabel("Categories", lambda: self.push_screen("categories")),
                 FocusableLabel("Investments"),
             ),
         )
