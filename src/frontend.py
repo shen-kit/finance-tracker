@@ -1,5 +1,6 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import (Container, Grid, Horizontal, HorizontalGroup,
+                                Vertical, VerticalGroup)
 from textual.events import Key
 from textual.screen import ModalScreen, Screen
 from textual.widget import Widget
@@ -23,10 +24,12 @@ class FocusableLabel(Label, Widget):
         self.can_focus = True
 
     def on_focus(self) -> None:
-        self.styles.color = "lime"
+        self.styles.color = "white"
+        self.styles.background = "green"
 
     def on_blur(self) -> None:
         self.styles.color = None
+        self.styles.background = None
 
     def on_key(self, event: Key) -> None:
         if event.key == "enter":
@@ -37,6 +40,8 @@ class MyListView(ListView):
     BINDINGS = [
         ("j,down", "cursor_down"),
         ("k,up", "cursor_up"),
+        ("h,left", "cursor_right"),
+        ("l,right", "cursor_right"),
     ]
 
 
@@ -82,6 +87,8 @@ class FTApp(App):
     BINDINGS = [
         ("j,down", "focus_next", "Focus next"),
         ("k,up", "focus_previous", "Focus next"),
+        ("h,left", "focus_right", "Focus left"),
+        ("l,right", "focus_right", "Focus right"),
         ("escape", "app.back", "Back"),
     ]
 
@@ -91,15 +98,28 @@ class FTApp(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        self.listview = MyListView(
-            ListItem(Label("View Categories"), id="categories"),
-            ListItem(Label("Add Category"), id="add_category"),
+
+        yield HorizontalGroup(
+            VerticalGroup(
+                FocusableLabel("Add Record"),
+                FocusableLabel("View Month Summary"),
+                FocusableLabel("View Year Summary"),
+            ),
+            VerticalGroup(
+                FocusableLabel("Record"),
+                FocusableLabel("Categories"),
+                FocusableLabel("Investments"),
+            ),
         )
-        yield self.listview
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.item.id is not None:
             self.push_screen(event.item.id)
+
+    def action_focus_right(self):
+        self.action_focus_next()
+        self.action_focus_next()
+        self.action_focus_next()
 
 
 if __name__ == "__main__":
