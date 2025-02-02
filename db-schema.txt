@@ -1,0 +1,21 @@
+CREATE TABLE category (
+    cat_id   INTEGER     NOT NULL  PRIMARY KEY,
+    cat_name VARCHAR(20) NOT NULL,
+    cat_type CHAR(1)     NOT NULL  CHECK (cat_type IN ('I', 'E')),
+    cat_desc VARCHAR(40)
+);
+CREATE TABLE record (
+    rec_id   INTEGER     NOT NULL  PRIMARY KEY,
+    rec_date DATE        NOT NULL,
+    rec_desc VARCHAR(50) NOT NULL,
+    rec_amt  NUMBER(7,2) NOT NULL,
+    cat_id   INTEGER     NOT NULL,
+    CONSTRAINT category_record_fk FOREIGN KEY (cat_id) REFERENCES category (cat_id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE TABLE investment (
+    inv_id        INTEGER     NOT NULL  PRIMARY KEY,
+    inv_date      DATE        NOT NULL,
+    inv_code      VARCHAR(10) NOT NULL,
+    inv_qty       NUMBER(7,2) NOT NULL,
+    inv_unitprice NUMBER(8,2) NOT NULL
+);
