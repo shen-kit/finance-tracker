@@ -2,6 +2,7 @@ package backend
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -103,6 +104,9 @@ func CreateDummyData() {
 	for _, rec := range records {
 		insertRecord(rec)
 	}
+
+	fmt.Println("Inserted dummy data")
+
 }
 
 // helper functions
