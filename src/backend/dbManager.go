@@ -11,6 +11,8 @@ import (
 
 var db *sql.DB
 
+const INVESTMENTS_PER_PAGE = 15
+
 // prepared statements
 var insInvStmt *sql.Stmt
 var insRecStmt *sql.Stmt
@@ -109,7 +111,7 @@ func CreateDummyData() {
 
 }
 
-// helper functions
+// helper functions - insertion
 
 func insertRecord(rec Record) {
 	_, date, desc, amt, cat_id := rec.spread()
@@ -130,4 +132,65 @@ func insertInvestment(inv Investment) {
 	if _, err := insInvStmt.Exec(date, code, qty, unitprice); err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
 	}
+}
+
+// helper functions - reading
+
+func GetInvestmentsRecent(page int) ([]Investment, error) {
+	sql := `SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
+          FROM investment
+          ORDER BY inv_date DESC
+          LIMIT ?, ?;`
+	rows, err := db.Query(sql, page*INVESTMENTS_PER_PAGE, INVESTMENTS_PER_PAGE)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var investments []Investment
+
+	// for each row, assign column data to struct fields and append struct to slice
+	for rows.Next() {
+		var inv Investment
+		if err := rows.Scan(&inv.id, &inv.date, &inv.code, &inv.qty, &inv.unitprice); err != nil {
+			return investments, err
+		}
+		investments = append(investments, inv)
+	}
+
+	// check for errors then return
+	if err = rows.Err(); err != nil {
+		return investments, err
+	}
+	return investments, nil
+}
+
+func GetInvestmentsFilter(opts FilterOpts) ([]Investment, error) {
+	sql := `SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
+          FROM investment
+          WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
+            AND inv_date BETWEEN ? AND ?
+            AND inv_code LIKE ?;`
+	rows, err := db.Query(sql, opts.minCost, opts.maxCost, opts.startDate, opts.endDate, "%"+opts.code+"%")
+	if err != nil {
+		log.Fatal("GetInvestmentsFilter query error: ", err)
+	}
+	defer rows.Close()
+
+	var investments []Investment
+
+	// for each row, assign column data to struct fields and append struct to slice
+	for rows.Next() {
+		var inv Investment
+		if err := rows.Scan(&inv.id, &inv.date, &inv.code, &inv.qty, &inv.unitprice); err != nil {
+			return investments, err
+		}
+		investments = append(investments, inv)
+	}
+
+	// check for errors then return
+	if err = rows.Err(); err != nil {
+		return investments, err
+	}
+	return investments, nil
 }
