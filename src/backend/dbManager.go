@@ -22,6 +22,7 @@ var insCatStmt *sql.Stmt
 var getInvRecStmt *sql.Stmt
 var getInvFilStmt *sql.Stmt
 var getRecRecStmt *sql.Stmt
+var getCategoriesStmt *sql.Stmt
 
 var getIncomeSumStmt *sql.Stmt
 var getExpenditureSumStmt *sql.Stmt
@@ -98,6 +99,10 @@ func SetupDb(path string) {
                                      FROM record
                                      ORDER BY rec_date DESC
                                      LIMIT ?, ?`)
+		if err != nil {
+			log.Println("Failed initialising getRecRecStmt: ", err)
+		}
+		getCategoriesStmt, err = db.Prepare(`SELECT cat_id, cat_name, cat_desc, cat_isincome FROM category`)
 		if err != nil {
 			log.Println("Failed initialising getRecRecStmt: ", err)
 		}
@@ -247,6 +252,17 @@ func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
 	defer rows.Close()
 
 	return dbRowsToRecords(rows)
+}
+
+/* Returns a slice containing all of the categories */
+func GetCategories() ([]Category, error) {
+	rows, err := getCategoriesStmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return dbRowsToCategories(rows)
 }
 
 /* Returns the total income over a date range (inclusive) */

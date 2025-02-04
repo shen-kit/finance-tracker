@@ -80,6 +80,25 @@ func dbRowsToRecords(rows *sql.Rows) ([]Record, error) {
 	return records, nil
 }
 
+func dbRowsToCategories(rows *sql.Rows) ([]Category, error) {
+	var categories []Category
+
+	// for each row, assign column data to struct fields and append struct to slice
+	for rows.Next() {
+		var cat Category
+		if err := rows.Scan(&cat.id, &cat.name, &cat.desc, &cat.isIncome); err != nil {
+			return nil, err
+		}
+		categories = append(categories, cat)
+	}
+
+	// check for errors then return
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return categories, nil
+}
+
 type FilterOpts struct {
 	minCost   float32
 	maxCost   float32

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/shen-kit/finance-tracker/backend"
-	"github.com/shen-kit/finance-tracker/helper"
 )
 
 func main() {
@@ -15,16 +14,17 @@ func main() {
 	// testQueryFunc(backend.GetInvestmentsFilter(backend.NewFilterOpts().WithCode("IV").WithMinCost(4000)))
 	// testQueryFunc(backend.GetRecordsRecent(0))
 	// testQueryFunc(backend.GetRecordsFilter(backend.NewFilterOpts().WithMinCost(0)))
+	testQueryFunc(backend.GetCategories())
 
-	startDate, _ := helper.MakeDate(2000, 1, 1)
-	endDate, _ := helper.MakeDate(3000, 1, 1)
-	val, err := backend.GetIncomeSum(startDate, endDate)
+	// startDate, _ := helper.MakeDate(2000, 1, 1)
+	// endDate, _ := helper.MakeDate(3000, 1, 1)
+	// val, err := backend.GetIncomeSum(startDate, endDate)
 	// val, err := backend.GetExpenditureSum(startDate, endDate)
 	// val, err := backend.GetCategorySum(2, startDate, endDate)
-	if err != nil {
-		fmt.Println("error")
-	}
-	println(val)
+	// if err != nil {
+	// 	fmt.Println("error")
+	// }
+	// println(val)
 }
 
 func testQueryFunc[T any](res []T, err error) {
