@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -11,12 +12,16 @@ import (
 
 var db *sql.DB
 
-const INVESTMENTS_PER_PAGE = 15
+const PAGE_ROWS = 15
 
 // prepared statements
 var insInvStmt *sql.Stmt
 var insRecStmt *sql.Stmt
 var insCatStmt *sql.Stmt
+
+var getInvRecStmt *sql.Stmt
+var getInvFilStmt *sql.Stmt
+var getRecRecStmt *sql.Stmt
 
 func SetupDb(path string) {
 
@@ -66,6 +71,30 @@ func SetupDb(path string) {
 		insCatStmt, err = db.Prepare("INSERT INTO category (cat_name, cat_isincome, cat_desc) VALUES (?,?,?)")
 		if err != nil {
 			log.Println("Failed initialising insCatStmt: ", err)
+		}
+
+		// query statements
+		getInvRecStmt, err = db.Prepare(`SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
+                                     FROM investment
+                                     ORDER BY inv_date DESC
+                                     LIMIT ?, ?`)
+		if err != nil {
+			log.Println("Failed initialising getInvRecStmt: ", err)
+		}
+		getInvFilStmt, err = db.Prepare(`SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
+                                     FROM investment
+                                     WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
+                                       AND inv_date BETWEEN ? AND ?
+                                       AND inv_code LIKE ?`)
+		if err != nil {
+			log.Println("Failed initialising getInvFilStmt: ", err)
+		}
+		getRecRecStmt, err = db.Prepare(`SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
+                                     FROM record
+                                     ORDER BY rec_date DESC
+                                     LIMIT ?, ?`)
+		if err != nil {
+			log.Println("Failed initialising getRecRecStmt: ", err)
 		}
 	}
 
@@ -137,60 +166,55 @@ func insertInvestment(inv Investment) {
 // helper functions - reading
 
 func GetInvestmentsRecent(page int) ([]Investment, error) {
-	sql := `SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
-          FROM investment
-          ORDER BY inv_date DESC
-          LIMIT ?, ?;`
-	rows, err := db.Query(sql, page*INVESTMENTS_PER_PAGE, INVESTMENTS_PER_PAGE)
+	rows, err := getInvRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var investments []Investment
-
-	// for each row, assign column data to struct fields and append struct to slice
-	for rows.Next() {
-		var inv Investment
-		if err := rows.Scan(&inv.id, &inv.date, &inv.code, &inv.qty, &inv.unitprice); err != nil {
-			return investments, err
-		}
-		investments = append(investments, inv)
-	}
-
-	// check for errors then return
-	if err = rows.Err(); err != nil {
-		return investments, err
-	}
-	return investments, nil
+	return dbRowsToInvestments(rows)
 }
 
 func GetInvestmentsFilter(opts FilterOpts) ([]Investment, error) {
-	sql := `SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
-          FROM investment
-          WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
-            AND inv_date BETWEEN ? AND ?
-            AND inv_code LIKE ?;`
-	rows, err := db.Query(sql, opts.minCost, opts.maxCost, opts.startDate, opts.endDate, "%"+opts.code+"%")
+	rows, err := getInvFilStmt.Query(opts.minCost, opts.maxCost, opts.startDate, opts.endDate, "%"+opts.code+"%")
 	if err != nil {
-		log.Fatal("GetInvestmentsFilter query error: ", err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	var investments []Investment
+	return dbRowsToInvestments(rows)
+}
 
-	// for each row, assign column data to struct fields and append struct to slice
-	for rows.Next() {
-		var inv Investment
-		if err := rows.Scan(&inv.id, &inv.date, &inv.code, &inv.qty, &inv.unitprice); err != nil {
-			return investments, err
+func GetRecordsRecent(page int) ([]Record, error) {
+	rows, err := getRecRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return dbRowsToRecords(rows)
+}
+
+func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
+	cmd := `SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
+          FROM record
+          WHERE rec_amt BETWEEN ? AND ?
+            AND rec_date BETWEEN ? AND ?`
+	args := []any{opts.minCost, opts.maxCost, opts.startDate, opts.endDate}
+
+	// filter by category if some are selected
+	if len(opts.catIds) > 0 {
+		cmd += "AND cat_id IN (?" + strings.Repeat(", ?", len(opts.catIds)-1) + ")"
+		for _, c := range opts.catIds {
+			args = append(args, c)
 		}
-		investments = append(investments, inv)
 	}
 
-	// check for errors then return
-	if err = rows.Err(); err != nil {
-		return investments, err
+	rows, err := db.Query(cmd, args...)
+	if err != nil {
+		return nil, err
 	}
-	return investments, nil
+	defer rows.Close()
+
+	return dbRowsToRecords(rows)
 }

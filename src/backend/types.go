@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -39,12 +40,50 @@ func (inv Investment) spread() (int, time.Time, string, float32, float32) {
 	return inv.id, inv.date, inv.code, inv.qty, inv.unitprice
 }
 
+func dbRowsToInvestments(rows *sql.Rows) ([]Investment, error) {
+	var investments []Investment
+
+	// for each row, assign column data to struct fields and append struct to slice
+	for rows.Next() {
+		var inv Investment
+		if err := rows.Scan(&inv.id, &inv.date, &inv.code, &inv.qty, &inv.unitprice); err != nil {
+			return investments, err
+		}
+		investments = append(investments, inv)
+	}
+
+	// check for errors then return
+	if err := rows.Err(); err != nil {
+		return investments, err
+	}
+	return investments, nil
+}
+
+func dbRowsToRecords(rows *sql.Rows) ([]Record, error) {
+	var records []Record
+
+	// for each row, assign column data to struct fields and append struct to slice
+	for rows.Next() {
+		var rec Record
+		if err := rows.Scan(&rec.id, &rec.date, &rec.desc, &rec.amt, &rec.catId); err != nil {
+			return nil, err
+		}
+		records = append(records, rec)
+	}
+
+	// check for errors then return
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return records, nil
+}
+
 type FilterOpts struct {
 	minCost   float32
 	maxCost   float32
 	startDate time.Time
 	endDate   time.Time
-	catId     []int
+	catIds    []int
 	code      string
 }
 
@@ -60,7 +99,7 @@ func NewFilterOpts() FilterOpts {
 		maxCost:   10000000,
 		startDate: startDate,
 		endDate:   endDate,
-		catId:     []int{},
+		catIds:    []int{},
 		code:      "",
 	}
 
@@ -88,7 +127,7 @@ func (opts FilterOpts) WithEndDate(val time.Time) FilterOpts {
 }
 
 func (opts FilterOpts) WithCatId(val []int) FilterOpts {
-	opts.catId = val
+	opts.catIds = val
 	return opts
 }
 
