@@ -3,6 +3,8 @@ package backend
 import (
 	"database/sql"
 	"time"
+
+	"github.com/shen-kit/finance-tracker/helper"
 )
 
 type Record struct {
@@ -91,8 +93,8 @@ func NewFilterOpts() FilterOpts {
 	/*
 	  Set default options for filters, allow functions to be passed to modify these
 	*/
-	startDate, _ := time.Parse("2006-01-02", "2000-01-01")
-	endDate, _ := time.Parse("2006-01-02", "3000-01-01")
+	startDate, _ := helper.MakeDate(2000, 1, 1)
+	endDate, _ := helper.MakeDate(3000, 1, 1)
 
 	opts := &FilterOpts{
 		minCost:   -10000000,

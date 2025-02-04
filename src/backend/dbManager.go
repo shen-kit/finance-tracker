@@ -23,6 +23,11 @@ var getInvRecStmt *sql.Stmt
 var getInvFilStmt *sql.Stmt
 var getRecRecStmt *sql.Stmt
 
+var getIncomeSumStmt *sql.Stmt
+var getExpenditureSumStmt *sql.Stmt
+var getCategorySumStmt *sql.Stmt
+
+/* Connects to the database, then creates tables and prepared statements */
 func SetupDb(path string) {
 
 	createTables := func() {
@@ -96,6 +101,27 @@ func SetupDb(path string) {
 		if err != nil {
 			log.Println("Failed initialising getRecRecStmt: ", err)
 		}
+
+		getIncomeSumStmt, err = db.Prepare(`SELECT SUM(rec_amt)
+                                        FROM record
+                                        WHERE cat_id IN (SELECT cat_id FROM category WHERE cat_isincome = true)
+                                          AND rec_date BETWEEN ? AND ?`)
+		if err != nil {
+			log.Println("Failed initialising getRecRecStmt: ", err)
+		}
+		getExpenditureSumStmt, err = db.Prepare(`SELECT SUM(rec_amt)
+                                             FROM record
+                                             WHERE cat_id IN (SELECT cat_id FROM category WHERE cat_isincome = false)
+                                               AND rec_date BETWEEN ? AND ?`)
+		if err != nil {
+			log.Println("Failed initialising getRecRecStmt: ", err)
+		}
+		getCategorySumStmt, err = db.Prepare(`SELECT SUM(rec_amt)
+                                          FROM record
+                                          WHERE cat_id = ? AND rec_date BETWEEN ? AND ?`)
+		if err != nil {
+			log.Println("Failed initialising getRecRecStmt: ", err)
+		}
 	}
 
 	// open connection to db
@@ -165,6 +191,7 @@ func insertInvestment(inv Investment) {
 
 // helper functions - reading
 
+/* Returns investments made during within a date range */
 func GetInvestmentsRecent(page int) ([]Investment, error) {
 	rows, err := getInvRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
@@ -175,6 +202,7 @@ func GetInvestmentsRecent(page int) ([]Investment, error) {
 	return dbRowsToInvestments(rows)
 }
 
+/* Returns investments matching a specified filter */
 func GetInvestmentsFilter(opts FilterOpts) ([]Investment, error) {
 	rows, err := getInvFilStmt.Query(opts.minCost, opts.maxCost, opts.startDate, opts.endDate, "%"+opts.code+"%")
 	if err != nil {
@@ -185,6 +213,7 @@ func GetInvestmentsFilter(opts FilterOpts) ([]Investment, error) {
 	return dbRowsToInvestments(rows)
 }
 
+/* Returns records from within a date range */
 func GetRecordsRecent(page int) ([]Record, error) {
 	rows, err := getRecRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
@@ -195,6 +224,7 @@ func GetRecordsRecent(page int) ([]Record, error) {
 	return dbRowsToRecords(rows)
 }
 
+/* Returns records matching a specified filter */
 func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
 	cmd := `SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
           FROM record
@@ -217,4 +247,31 @@ func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
 	defer rows.Close()
 
 	return dbRowsToRecords(rows)
+}
+
+/* Returns the total income over a date range (inclusive) */
+func GetIncomeSum(startDate, endDate time.Time) (float32, error) {
+	var sum float32
+	if err := getIncomeSumStmt.QueryRow(startDate, endDate).Scan(&sum); err != nil {
+		return 0, err
+	}
+	return sum, nil
+}
+
+/* Returns the total expenditure over a date range (inclusive), flips sign (expenditure > 0) */
+func GetExpenditureSum(startDate, endDate time.Time) (float32, error) {
+	var sum float32
+	if err := getExpenditureSumStmt.QueryRow(startDate, endDate).Scan(&sum); err != nil {
+		return 0, err
+	}
+	return -sum, nil
+}
+
+/* Returns the total money in/out for a given category over a date range */
+func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
+	var sum float32
+	if err := getCategorySumStmt.QueryRow(catId, startDate, endDate).Scan(&sum); err != nil {
+		return 0, err
+	}
+	return sum, nil
 }
