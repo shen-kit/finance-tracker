@@ -181,7 +181,7 @@ func insertRecord(rec Record) {
 }
 
 func insertCategory(cat Category) {
-	_, name, isIncome, desc := cat.spread()
+	_, name, isIncome, desc := cat.Spread()
 	if _, err := insCatStmt.Exec(name, isIncome, desc); err != nil {
 		log.Fatal("Failed to insert into category: ", err.Error())
 	}

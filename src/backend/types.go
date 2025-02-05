@@ -26,7 +26,7 @@ type Category struct {
 	desc     string
 }
 
-func (cat Category) spread() (int, string, bool, string) {
+func (cat Category) Spread() (int, string, bool, string) {
 	return cat.id, cat.name, cat.isIncome, cat.desc
 }
 
