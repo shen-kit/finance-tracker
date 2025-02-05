@@ -68,6 +68,18 @@ func createHomepage() {
 		AddItem("Investments", "", 'i', func() { pages.SwitchToPage("investments") }).
 		AddItem("Quit", "", 'q', func() { app.Stop() }).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor)
+
+	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'j' {
+			return tcell.NewEventKey(tcell.KeyDown, 'j', tcell.ModNone)
+		} else if event.Rune() == 'k' {
+			return tcell.NewEventKey(tcell.KeyUp, 'k', tcell.ModNone)
+		} else if event.Rune() == 'l' {
+			return tcell.NewEventKey(tcell.KeyEnter, 'l', tcell.ModNone)
+		}
+		return event
+	})
+
 	pages.AddPage("homepage", lv, true, true)
 }
 
@@ -76,10 +88,21 @@ func createCategoriesPage() {
 		SetBorders(true).
 		SetFixed(1, 0)
 
+	categoriesTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'q' || event.Rune() == 'h' {
+			pages.SwitchToPage("homepage")
+			return nil
+		}
+		return event
+	})
+
 	updateCategoriesTable()
 	pages.AddPage("categories", categoriesTable, true, false)
 }
 
+/*
+Update the categories table by pulling data from the backend
+*/
 func updateCategoriesTable() {
 	cats, err := backend.GetCategories()
 	if err != nil {
