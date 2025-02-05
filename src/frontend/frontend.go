@@ -86,8 +86,8 @@ func createHomepage() {
 func createCategoriesPage() {
 	categoriesTable = tview.NewTable().
 		SetBorders(true).
-		SetFixed(1, 0)
-
+		SetFixed(1, 0).
+		SetSelectable(true, false)
 	categoriesTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' || event.Rune() == 'h' {
 			pages.SwitchToPage("homepage")
