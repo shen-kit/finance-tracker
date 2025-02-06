@@ -151,11 +151,11 @@ func CreateDummyData() {
 	}
 
 	categories := [...]Category{
-		{name: "Work", isIncome: true, desc: "income from work"},
-		{name: "Groceries", isIncome: false, desc: "grocery spending"},
+		{Name: "Work", IsIncome: true, Desc: "income from work"},
+		{Name: "Groceries", IsIncome: false, Desc: "grocery spending"},
 	}
 	for _, cat := range categories {
-		insertCategory(cat)
+		InsertCategory(cat)
 	}
 
 	records := [...]Record{
@@ -180,7 +180,7 @@ func insertRecord(rec Record) {
 	}
 }
 
-func insertCategory(cat Category) {
+func InsertCategory(cat Category) {
 	_, name, isIncome, desc := cat.Spread()
 	if _, err := insCatStmt.Exec(name, isIncome, desc); err != nil {
 		log.Fatal("Failed to insert into category: ", err.Error())

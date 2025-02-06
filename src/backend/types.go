@@ -20,14 +20,14 @@ func (rec Record) spread() (int, time.Time, string, float32, int) {
 }
 
 type Category struct {
-	id       int
-	name     string
-	isIncome bool
-	desc     string
+	Id       int
+	Name     string
+	IsIncome bool
+	Desc     string
 }
 
 func (cat Category) Spread() (int, string, bool, string) {
-	return cat.id, cat.name, cat.isIncome, cat.desc
+	return cat.Id, cat.Name, cat.IsIncome, cat.Desc
 }
 
 type Investment struct {
@@ -86,7 +86,7 @@ func dbRowsToCategories(rows *sql.Rows) ([]Category, error) {
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var cat Category
-		if err := rows.Scan(&cat.id, &cat.name, &cat.desc, &cat.isIncome); err != nil {
+		if err := rows.Scan(&cat.Id, &cat.Name, &cat.Desc, &cat.IsIncome); err != nil {
 			return nil, err
 		}
 		categories = append(categories, cat)
