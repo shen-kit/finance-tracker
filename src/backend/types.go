@@ -38,7 +38,7 @@ type Investment struct {
 	unitprice float32
 }
 
-func (inv Investment) spread() (int, time.Time, string, float32, float32) {
+func (inv Investment) Spread() (int, time.Time, string, float32, float32) {
 	return inv.id, inv.date, inv.code, inv.qty, inv.unitprice
 }
 

@@ -188,7 +188,7 @@ func InsertCategory(cat Category) {
 }
 
 func insertInvestment(inv Investment) {
-	_, date, code, qty, unitprice := inv.spread()
+	_, date, code, qty, unitprice := inv.Spread()
 	if _, err := insInvStmt.Exec(date, code, qty, unitprice); err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
 	}
