@@ -12,6 +12,7 @@ import (
 var (
 	app             *tview.Application
 	pages           *tview.Pages
+	flex            *tview.Flex
 	categoriesTable *tview.Table
 )
 
@@ -20,8 +21,8 @@ func CreateTUI() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
+	createCategoriesTable()
 	createHomepage()
-	createCategoriesPage()
 
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {
 		panic(err)
@@ -64,13 +65,13 @@ func createHomepage() {
 	lv := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
-		AddItem("Add Record", "", 'a', func() { pages.SwitchToPage("add_record") }).
-		AddItem("View Month Summary", "", 'm', nil).
-		AddItem("View Year Summary", "", 'y', nil).
-		AddItem("Records", "", 'r', nil).
-		AddItem("Categories", "", 'c', func() { pages.SwitchToPage("categories"); updateCategoriesTable() }).
-		AddItem("Investments", "", 'i', func() { pages.SwitchToPage("investments") }).
-		AddItem("Quit", "", 'q', func() { app.Stop() })
+		AddItem("  Add Record            ", "", 0, nil).
+		AddItem("  View Month Summary    ", "", 0, nil).
+		AddItem("  View Year Summary     ", "", 0, nil).
+		AddItem("  Records               ", "", 0, nil).
+		AddItem("  Categories            ", "", 0, func() { showCategoriesTable() }).
+		AddItem("  Investments           ", "", 0, nil).
+		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
 
 	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'j' {
@@ -83,55 +84,66 @@ func createHomepage() {
 		return event
 	})
 
-	pages.AddPage("homepage", lv, true, true)
+	lv.SetTitle("Options").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
+
+	flex = tview.NewFlex().
+		AddItem(lv, 30, 0, true)
+
+	pages.AddPage("homepage", flex, true, true)
 }
 
-func createCategoriesPage() {
+func createCategoriesTable() {
 	categoriesTable = tview.NewTable().
 		SetBorders(false).
 		SetSeparator(tview.Borders.Vertical).
-		SetFixed(1, 0).
-		SetSelectable(true, false)
+		SetFixed(1, 0).            // always show header row
+		SetSelectable(true, false) // rows selectable
 
-	categoriesTable.SetBorder(true).SetTitle("Categories")
+	categoriesTable.SetTitle("Categories").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
 	categoriesTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' || event.Rune() == 'h' {
-			pages.SwitchToPage("homepage")
+			flex.RemoveItem(categoriesTable)
+			app.SetFocus(flex)
 			return nil
 		}
 		return event
 	})
-
-	updateCategoriesTable()
-	pages.AddPage("categories", categoriesTable, true, false)
 }
 
-/*
-Update the categories table by pulling data from the backend
-*/
-func updateCategoriesTable() {
-	cats, err := backend.GetCategories()
-	if err != nil {
-		panic(err)
+func showCategoriesTable() {
+	/*
+	   Update the categories table by pulling data from the backend
+	*/
+	updateCategoriesTable := func() {
+		categoriesTable.Clear()
+
+		cats, err := backend.GetCategories()
+		if err != nil {
+			panic(err)
+		}
+
+		headers := strings.Split(" ID : Name : Type : Description ", ":")
+		for i, h := range headers {
+			categoriesTable.SetCell(0, i, tview.NewTableCell(h).SetSelectable(false).SetStyle(tcell.StyleDefault.Bold(true)))
+		}
+
+		for i, cat := range cats {
+			id, name, isincome, desc := cat.Spread()
+			categoriesTable.
+				SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).SetAlign(tview.AlignCenter).SetMaxWidth(4)).
+				SetCell(i+1, 1, tview.NewTableCell(" "+name+" ").SetMaxWidth(20)).
+				SetCell(i+1, 2, tview.NewTableCell(func() string {
+					if isincome {
+						return " Income "
+					}
+					return " Expenditure "
+				}()).SetMaxWidth(15)).
+				SetCell(i+1, 3, tview.NewTableCell(" "+desc+" "))
+		}
 	}
 
-	headers := strings.Split(" ID : Name : Type : Description ", ":")
-	for i, h := range headers {
-		categoriesTable.SetCell(0, i, tview.NewTableCell(h).SetSelectable(false))
-	}
-
-	for i, cat := range cats {
-		id, name, isincome, desc := cat.Spread()
-		categoriesTable.
-			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).SetAlign(tview.AlignCenter).SetMaxWidth(4)).
-			SetCell(i+1, 1, tview.NewTableCell(" "+name+" ").SetMaxWidth(20)).
-			SetCell(i+1, 2, tview.NewTableCell(func() string {
-				if isincome {
-					return " Income "
-				}
-				return " Expenditure "
-			}()).SetMaxWidth(15)).
-			SetCell(i+1, 3, tview.NewTableCell(" "+desc+" "))
-	}
+	updateCategoriesTable()
+	flex.AddItem(categoriesTable, 0, 1, true)
+	app.SetFocus(categoriesTable)
 }
