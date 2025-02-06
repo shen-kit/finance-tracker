@@ -9,9 +9,11 @@ import (
 	"github.com/shen-kit/finance-tracker/backend"
 )
 
-var app *tview.Application
-var pages *tview.Pages
-var categoriesTable *tview.Table
+var (
+	app             *tview.Application
+	pages           *tview.Pages
+	categoriesTable *tview.Table
+)
 
 func CreateTUI() {
 	setTheme()
@@ -60,14 +62,15 @@ func setTheme() {
 
 func createHomepage() {
 	lv := tview.NewList().
+		ShowSecondaryText(false).
+		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
 		AddItem("Add Record", "", 'a', func() { pages.SwitchToPage("add_record") }).
 		AddItem("View Month Summary", "", 'm', nil).
 		AddItem("View Year Summary", "", 'y', nil).
 		AddItem("Records", "", 'r', nil).
 		AddItem("Categories", "", 'c', func() { pages.SwitchToPage("categories"); updateCategoriesTable() }).
 		AddItem("Investments", "", 'i', func() { pages.SwitchToPage("investments") }).
-		AddItem("Quit", "", 'q', func() { app.Stop() }).
-		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor)
+		AddItem("Quit", "", 'q', func() { app.Stop() })
 
 	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'j' {
@@ -85,9 +88,13 @@ func createHomepage() {
 
 func createCategoriesPage() {
 	categoriesTable = tview.NewTable().
-		SetBorders(true).
+		SetBorders(false).
+		SetSeparator(tview.Borders.Vertical).
 		SetFixed(1, 0).
 		SetSelectable(true, false)
+
+	categoriesTable.SetBorder(true).SetTitle("Categories")
+
 	categoriesTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' || event.Rune() == 'h' {
 			pages.SwitchToPage("homepage")
@@ -109,22 +116,22 @@ func updateCategoriesTable() {
 		panic(err)
 	}
 
-	headers := strings.Split("ID:Name:Type:Description", ":")
+	headers := strings.Split(" ID : Name : Type : Description ", ":")
 	for i, h := range headers {
-		categoriesTable.SetCellSimple(0, i, h)
+		categoriesTable.SetCell(0, i, tview.NewTableCell(h).SetSelectable(false))
 	}
 
 	for i, cat := range cats {
 		id, name, isincome, desc := cat.Spread()
-		categoriesTable.SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf("%d", id)))
-		categoriesTable.SetCell(i+1, 1, tview.NewTableCell(name))
-		categoriesTable.SetCell(i+1, 2, tview.NewTableCell(func() string {
-			if isincome {
-				return "Income"
-			}
-			return "Expenditure"
-		}()).SetAlign(tview.AlignCenter),
-		)
-		categoriesTable.SetCell(i+1, 3, tview.NewTableCell(desc))
+		categoriesTable.
+			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).SetAlign(tview.AlignCenter).SetMaxWidth(4)).
+			SetCell(i+1, 1, tview.NewTableCell(" "+name+" ").SetMaxWidth(20)).
+			SetCell(i+1, 2, tview.NewTableCell(func() string {
+				if isincome {
+					return " Income "
+				}
+				return " Expenditure "
+			}()).SetMaxWidth(15)).
+			SetCell(i+1, 3, tview.NewTableCell(" "+desc+" "))
 	}
 }

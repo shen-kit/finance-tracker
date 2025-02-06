@@ -1,8 +1,8 @@
 CREATE TABLE category (
-    cat_id   INTEGER     NOT NULL  PRIMARY KEY,
-    cat_name VARCHAR(20) NOT NULL,
-    cat_type CHAR(1)     NOT NULL  CHECK (cat_type IN ('I', 'E')),
-    cat_desc VARCHAR(40)
+    cat_id       INTEGER     NOT NULL PRIMARY KEY,
+    cat_name     VARCHAR(20) NOT NULL,
+    cat_type     CHAR(1)     NOT NULL CHECK   (cat_type IN ('I', 'E')),
+    cat_isincome BOOL
 );
 CREATE TABLE record (
     rec_id   INTEGER     NOT NULL  PRIMARY KEY,
