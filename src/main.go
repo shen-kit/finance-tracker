@@ -4,17 +4,22 @@ import (
 	"fmt"
 
 	"github.com/shen-kit/finance-tracker/backend"
+	"github.com/shen-kit/finance-tracker/frontend"
 )
 
 func main() {
 	backend.SetupDb("./test.db")
 	// backend.CreateDummyData()
 
+	frontend.CreateTUI()
+}
+
+func testBackend() {
 	// testQueryFunc(backend.GetInvestmentsRecent(0))
 	// testQueryFunc(backend.GetInvestmentsFilter(backend.NewFilterOpts().WithCode("IV").WithMinCost(4000)))
 	// testQueryFunc(backend.GetRecordsRecent(0))
 	// testQueryFunc(backend.GetRecordsFilter(backend.NewFilterOpts().WithMinCost(0)))
-	testQueryFunc(backend.GetCategories())
+	// testQueryFunc(backend.GetCategories())
 
 	// startDate, _ := helper.MakeDate(2000, 1, 1)
 	// endDate, _ := helper.MakeDate(3000, 1, 1)
@@ -25,6 +30,7 @@ func main() {
 	// 	fmt.Println("error")
 	// }
 	// println(val)
+
 }
 
 func testQueryFunc[T any](res []T, err error) {

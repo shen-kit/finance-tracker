@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"time"
 
@@ -142,53 +143,55 @@ func SetupDb(path string) {
 
 func CreateDummyData() {
 	investments := [...]Investment{
-		{date: time.Now().AddDate(0, -1, 0), code: "IVV", qty: 10, unitprice: 600},
-		{date: time.Now().AddDate(0, -1, 0), code: "VGS.AX", qty: 5, unitprice: 600},
-		{date: time.Now().AddDate(0, -1, 0), code: "IVV", qty: 10, unitprice: 600},
+		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
+		{Date: time.Now().AddDate(0, -1, 0), Code: "VGS.AX", Qty: 5, Unitprice: 600},
+		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
 	}
-	for _, inv := range investments {
-		insertInvestment(inv)
-	}
-
-	categories := [...]Category{
-		{name: "Work", isIncome: true, desc: "income from work"},
-		{name: "Groceries", isIncome: false, desc: "grocery spending"},
-	}
-	for _, cat := range categories {
-		insertCategory(cat)
+	for range 10 {
+		for _, inv := range investments {
+			InsertInvestment(inv)
+		}
 	}
 
-	records := [...]Record{
-		{date: time.Now(), desc: "new record desc 1", amt: 100, catId: 1},
-		{date: time.Now(), desc: "new record desc 2", amt: -200, catId: 2},
-		{date: time.Now(), desc: "new record desc 3", amt: 300, catId: 1},
-	}
-	for _, rec := range records {
-		insertRecord(rec)
-	}
-
+	// categories := [...]Category{
+	// 	{Name: "Work", IsIncome: true, Desc: "income from work"},
+	// 	{Name: "Groceries", IsIncome: false, Desc: "grocery spending"},
+	// }
+	// for _, cat := range categories {
+	// 	InsertCategory(cat)
+	// }
+	//
+	// records := [...]Record{
+	// 	{Date: time.Now(), Desc: "new record desc 1", Amt: 100, CatId: 1},
+	// 	{Date: time.Now(), Desc: "new record desc 2", Amt: -200, CatId: 2},
+	// 	{Date: time.Now(), Desc: "new record desc 3", Amt: 300, CatId: 1},
+	// }
+	// for _, rec := range records {
+	// 	InsertRecord(rec)
+	// }
+	//
 	fmt.Println("Inserted dummy data")
 
 }
 
 // Inserting Rows
 
-func insertRecord(rec Record) {
+func InsertRecord(rec Record) {
 	_, date, desc, amt, cat_id := rec.spread()
 	if _, err := insRecStmt.Exec(date, desc, amt, cat_id); err != nil {
 		log.Fatal("Failed to insert into category: ", err.Error())
 	}
 }
 
-func insertCategory(cat Category) {
-	_, name, isIncome, desc := cat.spread()
+func InsertCategory(cat Category) {
+	_, name, isIncome, desc := cat.Spread()
 	if _, err := insCatStmt.Exec(name, isIncome, desc); err != nil {
 		log.Fatal("Failed to insert into category: ", err.Error())
 	}
 }
 
-func insertInvestment(inv Investment) {
-	_, date, code, qty, unitprice := inv.spread()
+func InsertInvestment(inv Investment) {
+	_, date, code, qty, unitprice := inv.Spread()
 	if _, err := insInvStmt.Exec(date, code, qty, unitprice); err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
 	}
@@ -292,6 +295,14 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 	return sum, nil
 }
 
+// Frontend Helper Functions
+
+func GetInvestmentsPages() int8 {
+	var res float64
+	db.QueryRow("SELECT COUNT(*) / ? FROM investment", float32(PAGE_ROWS)).Scan(&res)
+	return int8(math.Ceil(res))
+}
+
 // Updating Rows
 
 func UpdateRecord(id int, rec Record) {
@@ -303,7 +314,7 @@ func UpdateRecord(id int, rec Record) {
 }
 
 func UpdateCategory(id int, cat Category) {
-	_, name, isIncome, desc := cat.spread()
+	_, name, isIncome, desc := cat.Spread()
 	_, err := db.Exec("UPDATE category SET cat_name = ?, cat_isincome = ?, cat_desc = ? WHERE cat_id = ?", name, isIncome, desc, id)
 	if err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
@@ -311,7 +322,7 @@ func UpdateCategory(id int, cat Category) {
 }
 
 func UpdateInvestment(id int, inv Investment) {
-	_, date, code, qty, unitprice := inv.spread()
+	_, date, code, qty, unitprice := inv.Spread()
 	_, err := db.Exec("UPDATE investment SET inv_date = ?, inv_code = ?, inv_qty = ?, inv_unitprice = ? WHERE inv_id = ?", date, code, qty, unitprice, id)
 	if err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
