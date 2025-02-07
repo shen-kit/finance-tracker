@@ -14,14 +14,15 @@ import (
 
 var (
 	investmentsTable *tview.Table
-	newInvForm       *tview.Form
+	currentPage      int8 // currently viewed page
+	lastPageIdx      int8
 
+	newInvForm  *tview.Form
 	inDate      *tview.InputField
 	inCode      *tview.InputField
 	inUnitprice *tview.InputField
 	inQty       *tview.InputField
-
-	editingId int
+	editingId   int
 )
 
 func createInvestmentsTable() {
@@ -31,7 +32,7 @@ func createInvestmentsTable() {
 		SetFixed(1, 0).
 		SetSelectable(true, false)
 
-	investmentsTable.SetTitle("Investments").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
+	investmentsTable.SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
 	investmentsTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' || event.Rune() == 'h' {
@@ -50,7 +51,7 @@ func createInvestmentsTable() {
 			}
 			backend.DeleteInvestment(int(res))
 			updateInvestmentsTable()
-		} else if event.Rune() == 'e' || event.Rune() == 'l' { // edit investment
+		} else if event.Rune() == 'e' { // edit investment
 			row, _ := investmentsTable.GetSelection()
 			id, _ := strconv.ParseInt(strings.Trim(investmentsTable.GetCell(row, 0).Text, " "), 10, 32)
 			date := strings.Trim(investmentsTable.GetCell(row, 1).Text, " ")
@@ -60,16 +61,32 @@ func createInvestmentsTable() {
 
 			editingId = int(id)
 			showInvestmentForm(date, code, qty, unitprice)
+		} else if event.Rune() == 'L' { // next page
+			changePage(currentPage + 1)
+		} else if event.Rune() == 'H' && currentPage > 0 { // previous page
+			changePage(currentPage - 1)
 		}
 		return event
 	})
+
+	updateInvestmentsTable()
+}
+
+func changePage(page int8) {
+	if page < 0 || page > lastPageIdx {
+		return
+	}
+	currentPage = page
+	investmentsTable.SetTitle(fmt.Sprintf("Investments (%d/%d)", currentPage+1, lastPageIdx+1))
+	updateInvestmentsTable()
 }
 
 /* Pulls data from the backend to update the table */
 func updateInvestmentsTable() {
 	investmentsTable.Clear()
+	lastPageIdx = backend.GetInvestmentsPages() - 1
 
-	invs, err := backend.GetInvestmentsRecent(0)
+	invs, err := backend.GetInvestmentsRecent(int(currentPage))
 	if err != nil {
 		panic(err)
 	}
@@ -94,7 +111,7 @@ func updateInvestmentsTable() {
 }
 
 func showInvestmentsTable() {
-	updateInvestmentsTable()
+	changePage(0) // always start on Page 0
 	flex.AddItem(investmentsTable, 0, 1, true)
 	app.SetFocus(investmentsTable)
 }

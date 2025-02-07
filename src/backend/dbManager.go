@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"time"
 
@@ -146,27 +147,29 @@ func CreateDummyData() {
 		{Date: time.Now().AddDate(0, -1, 0), Code: "VGS.AX", Qty: 5, Unitprice: 600},
 		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
 	}
-	for _, inv := range investments {
-		InsertInvestment(inv)
+	for range 10 {
+		for _, inv := range investments {
+			InsertInvestment(inv)
+		}
 	}
 
-	categories := [...]Category{
-		{Name: "Work", IsIncome: true, Desc: "income from work"},
-		{Name: "Groceries", IsIncome: false, Desc: "grocery spending"},
-	}
-	for _, cat := range categories {
-		InsertCategory(cat)
-	}
-
-	records := [...]Record{
-		{Date: time.Now(), Desc: "new record desc 1", Amt: 100, CatId: 1},
-		{Date: time.Now(), Desc: "new record desc 2", Amt: -200, CatId: 2},
-		{Date: time.Now(), Desc: "new record desc 3", Amt: 300, CatId: 1},
-	}
-	for _, rec := range records {
-		InsertRecord(rec)
-	}
-
+	// categories := [...]Category{
+	// 	{Name: "Work", IsIncome: true, Desc: "income from work"},
+	// 	{Name: "Groceries", IsIncome: false, Desc: "grocery spending"},
+	// }
+	// for _, cat := range categories {
+	// 	InsertCategory(cat)
+	// }
+	//
+	// records := [...]Record{
+	// 	{Date: time.Now(), Desc: "new record desc 1", Amt: 100, CatId: 1},
+	// 	{Date: time.Now(), Desc: "new record desc 2", Amt: -200, CatId: 2},
+	// 	{Date: time.Now(), Desc: "new record desc 3", Amt: 300, CatId: 1},
+	// }
+	// for _, rec := range records {
+	// 	InsertRecord(rec)
+	// }
+	//
 	fmt.Println("Inserted dummy data")
 
 }
@@ -290,6 +293,15 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 		return 0, err
 	}
 	return sum, nil
+}
+
+// Frontend Helper Functions
+
+func GetInvestmentsPages() int8 {
+	var res float64
+	db.QueryRow("SELECT COUNT(*) / ? FROM investment", float32(PAGE_ROWS)).Scan(&res)
+	print(res)
+	return int8(math.Ceil(res))
 }
 
 // Updating Rows
