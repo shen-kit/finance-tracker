@@ -20,7 +20,6 @@ var (
 	inCode      *tview.InputField
 	inUnitprice *tview.InputField
 	inQty       *tview.InputField
-	btnSubmit   *tview.Button
 
 	editingId int
 )
@@ -66,6 +65,7 @@ func createInvestmentsTable() {
 	})
 }
 
+/* Pulls data from the backend to update the table */
 func updateInvestmentsTable() {
 	investmentsTable.Clear()
 
@@ -97,29 +97,6 @@ func showInvestmentsTable() {
 	updateInvestmentsTable()
 	flex.AddItem(investmentsTable, 0, 1, true)
 	app.SetFocus(investmentsTable)
-}
-
-/* Returns (Investment, success?) */
-func parseForm() (backend.Investment, bool) {
-	code := inCode.GetText()
-	qty, err := strconv.ParseFloat(inQty.GetText(), 32)
-	if err != nil {
-		panic(err)
-	}
-	unitprice, err := strconv.ParseFloat(inUnitprice.GetText(), 32)
-	if err != nil {
-		panic(err)
-	}
-	date, err := time.Parse("2006-01-02", inDate.GetText())
-	if err != nil {
-		panic(err)
-	}
-	if code == "" || qty == 0 || unitprice <= 0 {
-		newInvForm.SetLabelColor(tcell.ColorRed)
-		return backend.Investment{}, false
-	}
-
-	return backend.Investment{Date: date, Code: code, Qty: float32(qty), Unitprice: float32(unitprice)}, true
 }
 
 func createNewInvestmentForm() {
@@ -161,13 +138,13 @@ func createNewInvestmentForm() {
 
 	inUnitprice = tview.NewInputField().
 		SetLabel("Unit Price").
-		SetFieldWidth(7)
+		SetFieldWidth(7).
+		SetAcceptanceFunc(tview.InputFieldFloat)
 
 	inQty = tview.NewInputField().
 		SetLabel("Qty").
-		SetFieldWidth(7)
-
-	btnSubmit = tview.NewButton("")
+		SetFieldWidth(7).
+		SetAcceptanceFunc(tview.InputFieldFloat)
 
 	newInvForm = tview.NewForm().
 		AddFormItem(inDate).
@@ -176,6 +153,29 @@ func createNewInvestmentForm() {
 		AddButton("Save", onSubmit)
 
 	newInvForm.SetBorder(true)
+}
+
+/* Returns (Investment, success?) */
+func parseForm() (backend.Investment, bool) {
+	code := inCode.GetText()
+	qty, err := strconv.ParseFloat(inQty.GetText(), 32)
+	if err != nil {
+		panic(err)
+	}
+	unitprice, err := strconv.ParseFloat(inUnitprice.GetText(), 32)
+	if err != nil {
+		panic(err)
+	}
+	date, err := time.Parse("2006-01-02", inDate.GetText())
+	if err != nil {
+		panic(err)
+	}
+	if code == "" || qty == 0 || unitprice <= 0 {
+		newInvForm.SetLabelColor(tcell.ColorRed)
+		return backend.Investment{}, false
+	}
+
+	return backend.Investment{Date: date, Code: code, Qty: float32(qty), Unitprice: float32(unitprice)}, true
 }
 
 /*
