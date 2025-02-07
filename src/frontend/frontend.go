@@ -23,11 +23,12 @@ func CreateTUI() {
 	createNewInvestmentForm()
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyCtrlQ:
+		// ctrl+D to exit
+		if event.Key() == tcell.KeyCtrlD {
 			app.Stop()
-		case tcell.KeyCtrlC: // remap ctrl+c to escape (<C-c> exits app by default)
-			return tcell.NewEventKey(tcell.KeyEscape, ' ', tcell.ModNone)
+			return nil
+		} else if event.Key() == tcell.KeyCtrlC { // disable default behaviour (exit app)
+			return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
 		}
 		return event
 	})
