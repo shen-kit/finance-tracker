@@ -34,6 +34,12 @@ func createInvestmentsTable() {
 		} else if event.Rune() == 'a' {
 			showNewInvestmentForm()
 			return nil
+		} else if event.Rune() == 'd' {
+			row, _ := investmentsTable.GetSelection()
+			res, err := strconv.ParseInt(investmentsTable.GetCell(row, 0).Text, 10, 32)
+			if err != nil {
+				panic(err)
+			}
 		}
 		return event
 	})
@@ -58,11 +64,11 @@ func updateInvestmentsTable() {
 			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
 				SetAlign(tview.AlignCenter).
 				SetMaxWidth(4)).
-			SetCell(i+1, 1, tview.NewTableCell(date.Format("2006-01-02")).SetAlign(tview.AlignCenter).SetMaxWidth(12)).
-			SetCell(i+1, 2, tview.NewTableCell(code)).
-			SetCell(i+1, 3, tview.NewTableCell(fmt.Sprintf("%.1f", qty))).
-			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf("%.2f", unitprice))).
-			SetCell(i+1, 5, tview.NewTableCell(fmt.Sprintf("%.2f", unitprice*qty)))
+			SetCell(i+1, 1, tview.NewTableCell(date.Format(" 2006-01-02 ")).SetAlign(tview.AlignCenter).SetMaxWidth(12)).
+			SetCell(i+1, 2, tview.NewTableCell(" "+code+" ")).
+			SetCell(i+1, 3, tview.NewTableCell(fmt.Sprintf(" %.0f ", qty))).
+			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" $%.2f ", unitprice))).
+			SetCell(i+1, 5, tview.NewTableCell(fmt.Sprintf(" $%.2f ", unitprice*qty)))
 	}
 }
 
