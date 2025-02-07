@@ -171,7 +171,7 @@ func CreateDummyData() {
 
 }
 
-// helper functions - insertion
+// Inserting Rows
 
 func InsertRecord(rec Record) {
 	_, date, desc, amt, cat_id := rec.spread()
@@ -194,7 +194,7 @@ func InsertInvestment(inv Investment) {
 	}
 }
 
-// helper functions - reading
+// Reading Rows
 
 /* Returns investments made during within a date range */
 func GetInvestmentsRecent(page int) ([]Investment, error) {
@@ -290,4 +290,56 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 		return 0, err
 	}
 	return sum, nil
+}
+
+// Updating Rows
+
+func UpdateRecord(id int, rec Record) {
+	_, date, desc, amt, catId := rec.spread()
+	_, err := db.Exec("UPDATE record SET rec_date = ?, rec_desc = ?, rec_amt = ?, cat_id = ? WHERE rec_id = ?", date, desc, amt, catId, id)
+	if err != nil {
+		log.Fatal("Failed to insert into investment: ", err.Error())
+	}
+}
+
+func UpdateCategory(id int, cat Category) {
+	_, name, isIncome, desc := cat.spread()
+	_, err := db.Exec("UPDATE category SET cat_name = ?, cat_isincome = ?, cat_desc = ? WHERE cat_id = ?", name, isIncome, desc, id)
+	if err != nil {
+		log.Fatal("Failed to insert into investment: ", err.Error())
+	}
+}
+
+func UpdateInvestment(id int, inv Investment) {
+	_, date, code, qty, unitprice := inv.spread()
+	_, err := db.Exec("UPDATE investment SET inv_date = ?, inv_code = ?, inv_qty = ?, inv_unitprice = ? WHERE inv_id = ?", date, code, qty, unitprice, id)
+	if err != nil {
+		log.Fatal("Failed to insert into investment: ", err.Error())
+	}
+}
+
+// Deleting Rows
+
+func DeleteRecord(id int) error {
+	_, err := db.Exec("DELETE FROM record WHERE rec_id = ?", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteCategory(id int) error {
+	_, err := db.Exec("DELETE FROM category WHERE cat_id = ?", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteInvestment(id int) error {
+	_, err := db.Exec("DELETE FROM investment WHERE inv_id = ?", id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
