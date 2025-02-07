@@ -20,6 +20,7 @@ func CreateTUI() {
 	createCategoriesTable()
 	createNewCategoryForm()
 	createInvestmentsTable()
+	createNewInvestmentForm()
 
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {
 		panic(err)

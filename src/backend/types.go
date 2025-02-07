@@ -8,15 +8,15 @@ import (
 )
 
 type Record struct {
-	id    int
-	date  time.Time
-	desc  string
-	amt   float32
-	catId int
+	Id    int
+	Date  time.Time
+	Desc  string
+	Amt   float32
+	CatId int
 }
 
 func (rec Record) spread() (int, time.Time, string, float32, int) {
-	return rec.id, rec.date, rec.desc, rec.amt, rec.catId
+	return rec.Id, rec.Date, rec.Desc, rec.Amt, rec.CatId
 }
 
 type Category struct {
@@ -31,15 +31,15 @@ func (cat Category) Spread() (int, string, bool, string) {
 }
 
 type Investment struct {
-	id        int
-	date      time.Time
-	code      string
-	qty       float32
-	unitprice float32
+	Id        int
+	Date      time.Time
+	Code      string
+	Qty       float32
+	Unitprice float32
 }
 
 func (inv Investment) Spread() (int, time.Time, string, float32, float32) {
-	return inv.id, inv.date, inv.code, inv.qty, inv.unitprice
+	return inv.Id, inv.Date, inv.Code, inv.Qty, inv.Unitprice
 }
 
 func dbRowsToInvestments(rows *sql.Rows) ([]Investment, error) {
@@ -48,7 +48,7 @@ func dbRowsToInvestments(rows *sql.Rows) ([]Investment, error) {
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var inv Investment
-		if err := rows.Scan(&inv.id, &inv.date, &inv.code, &inv.qty, &inv.unitprice); err != nil {
+		if err := rows.Scan(&inv.Id, &inv.Date, &inv.Code, &inv.Qty, &inv.Unitprice); err != nil {
 			return investments, err
 		}
 		investments = append(investments, inv)
@@ -67,7 +67,7 @@ func dbRowsToRecords(rows *sql.Rows) ([]Record, error) {
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var rec Record
-		if err := rows.Scan(&rec.id, &rec.date, &rec.desc, &rec.amt, &rec.catId); err != nil {
+		if err := rows.Scan(&rec.Id, &rec.Date, &rec.Desc, &rec.Amt, &rec.CatId); err != nil {
 			return nil, err
 		}
 		records = append(records, rec)

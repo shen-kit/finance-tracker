@@ -142,12 +142,12 @@ func SetupDb(path string) {
 
 func CreateDummyData() {
 	investments := [...]Investment{
-		{date: time.Now().AddDate(0, -1, 0), code: "IVV", qty: 10, unitprice: 600},
-		{date: time.Now().AddDate(0, -1, 0), code: "VGS.AX", qty: 5, unitprice: 600},
-		{date: time.Now().AddDate(0, -1, 0), code: "IVV", qty: 10, unitprice: 600},
+		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
+		{Date: time.Now().AddDate(0, -1, 0), Code: "VGS.AX", Qty: 5, Unitprice: 600},
+		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
 	}
 	for _, inv := range investments {
-		insertInvestment(inv)
+		InsertInvestment(inv)
 	}
 
 	categories := [...]Category{
@@ -159,12 +159,12 @@ func CreateDummyData() {
 	}
 
 	records := [...]Record{
-		{date: time.Now(), desc: "new record desc 1", amt: 100, catId: 1},
-		{date: time.Now(), desc: "new record desc 2", amt: -200, catId: 2},
-		{date: time.Now(), desc: "new record desc 3", amt: 300, catId: 1},
+		{Date: time.Now(), Desc: "new record desc 1", Amt: 100, CatId: 1},
+		{Date: time.Now(), Desc: "new record desc 2", Amt: -200, CatId: 2},
+		{Date: time.Now(), Desc: "new record desc 3", Amt: 300, CatId: 1},
 	}
 	for _, rec := range records {
-		insertRecord(rec)
+		InsertRecord(rec)
 	}
 
 	fmt.Println("Inserted dummy data")
@@ -173,7 +173,7 @@ func CreateDummyData() {
 
 // helper functions - insertion
 
-func insertRecord(rec Record) {
+func InsertRecord(rec Record) {
 	_, date, desc, amt, cat_id := rec.spread()
 	if _, err := insRecStmt.Exec(date, desc, amt, cat_id); err != nil {
 		log.Fatal("Failed to insert into category: ", err.Error())
@@ -187,7 +187,7 @@ func InsertCategory(cat Category) {
 	}
 }
 
-func insertInvestment(inv Investment) {
+func InsertInvestment(inv Investment) {
 	_, date, code, qty, unitprice := inv.Spread()
 	if _, err := insInvStmt.Exec(date, code, qty, unitprice); err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())

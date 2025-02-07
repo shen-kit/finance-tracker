@@ -2,7 +2,10 @@ package frontend
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -55,7 +58,7 @@ func updateInvestmentsTable() {
 			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
 				SetAlign(tview.AlignCenter).
 				SetMaxWidth(4)).
-			SetCell(i+1, 1, tview.NewTableCell(date.Format("YYYY-MM-DD")).SetAlign(tview.AlignCenter).SetMaxWidth(12)).
+			SetCell(i+1, 1, tview.NewTableCell(date.Format("2006-01-02")).SetAlign(tview.AlignCenter).SetMaxWidth(12)).
 			SetCell(i+1, 2, tview.NewTableCell(code)).
 			SetCell(i+1, 3, tview.NewTableCell(fmt.Sprintf("%.1f", qty))).
 			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf("%.2f", unitprice))).
@@ -71,8 +74,52 @@ func showInvestmentsTable() {
 
 func createNewInvestmentForm() {
 
+	isPartialDate := func(s string, r rune) bool {
+		regex0 := regexp.MustCompile(`^\d{0,4}$`)
+		regex1 := regexp.MustCompile(`^\d{4}-\d{0,2}$`)
+		regex2 := regexp.MustCompile(`^\d{4}-\d{2}-\d{0,2}$`)
+		return regex0.MatchString(s) || regex1.MatchString(s) || regex2.MatchString(s)
+	}
+
+	var iCode string
+	var iQty, iUnitprice float32
+	var dateInput *tview.InputField
+
+	closeForm := func() {
+		flex.RemoveItem(newInvForm)
+		app.SetFocus(investmentsTable)
+	}
+
+	onSubmit := func() {
+		iDate, err := time.Parse("2006-01-02", dateInput.GetText())
+		if err != nil {
+			return
+		}
+		backend.InsertInvestment(backend.Investment{Date: iDate, Code: iCode, Qty: iQty, Unitprice: iUnitprice})
+	}
+
+	dateInput = tview.NewInputField().
+		SetLabel("Date").
+		SetFieldWidth(10).
+		SetPlaceholder("YYYY-MM-DD").
+		SetAcceptanceFunc(isPartialDate)
+
+	newInvForm = tview.NewForm().
+		AddFormItem(dateInput).
+		AddInputField("Stock Code", "", 7, nil, func(v string) { iCode = v }).
+		AddInputField("Unitprice", "", 7, tview.InputFieldFloat, func(v string) {
+			res, _ := strconv.ParseFloat(v, 32)
+			iUnitprice = float32(res)
+		}).
+		AddInputField("Qty", "", 7, tview.InputFieldFloat, func(v string) {
+			res, _ := strconv.ParseFloat(v, 32)
+			iQty = float32(res)
+		}).
+		AddButton("Add", onSubmit).
+		AddButton("Cancel", closeForm)
 }
 
 func showNewInvestmentForm() {
-
+	flex.AddItem(newInvForm, 55, 0, true)
+	app.SetFocus(newInvForm)
 }
