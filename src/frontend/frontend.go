@@ -23,8 +23,9 @@ func CreateTUI() {
 	createNewInvestmentForm()
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// ctrl+D to exit
-		if event.Key() == tcell.KeyCtrlD {
+		// ctrl+D to exit, or ctrl+C/q when on homepage
+		if event.Key() == tcell.KeyCtrlD ||
+			(flex.GetItemCount() == 1 && (event.Key() == tcell.KeyCtrlC || event.Rune() == 'q')) {
 			app.Stop()
 			return nil
 		} else if event.Key() == tcell.KeyCtrlC { // disable default behaviour (exit app)
@@ -99,5 +100,5 @@ func createHomepage() {
 	flex = tview.NewFlex().
 		AddItem(lv, 30, 0, true)
 
-	pages.AddPage("homepage", flex, true, true)
+	pages.AddPage("main", flex, true, true)
 }
