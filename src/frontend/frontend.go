@@ -22,6 +22,16 @@ func CreateTUI() {
 	createInvestmentsTable()
 	createNewInvestmentForm()
 
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlQ:
+			app.Stop()
+		case tcell.KeyCtrlC: // remap ctrl+c to escape (<C-c> exits app by default)
+			return tcell.NewEventKey(tcell.KeyEscape, ' ', tcell.ModNone)
+		}
+		return event
+	})
+
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {
 		panic(err)
 	}

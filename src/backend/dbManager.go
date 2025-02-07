@@ -300,7 +300,6 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 func GetInvestmentsPages() int8 {
 	var res float64
 	db.QueryRow("SELECT COUNT(*) / ? FROM investment", float32(PAGE_ROWS)).Scan(&res)
-	print(res)
 	return int8(math.Ceil(res))
 }
 

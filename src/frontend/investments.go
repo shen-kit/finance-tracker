@@ -35,7 +35,7 @@ func createInvestmentsTable() {
 	investmentsTable.SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
 	investmentsTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'q' || event.Rune() == 'h' {
+		if event.Rune() == 'q' || event.Rune() == 'h' || event.Key() == tcell.KeyEscape {
 			flex.RemoveItem(investmentsTable)
 			app.SetFocus(flex)
 			return nil
@@ -116,6 +116,8 @@ func showInvestmentsTable() {
 	app.SetFocus(investmentsTable)
 }
 
+// INVESTMENT FORM
+
 func createNewInvestmentForm() {
 
 	closeForm := func() {
@@ -170,6 +172,14 @@ func createNewInvestmentForm() {
 		AddButton("Save", onSubmit)
 
 	newInvForm.SetBorder(true)
+
+	newInvForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			closeForm()
+			return nil
+		}
+		return event
+	})
 }
 
 /* Returns (Investment, success?) */

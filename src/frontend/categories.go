@@ -24,7 +24,7 @@ func createCategoriesTable() {
 	categoriesTable.SetTitle("Categories").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
 	categoriesTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'q' || event.Rune() == 'h' {
+		if event.Rune() == 'q' || event.Rune() == 'h' || event.Key() == tcell.KeyEscape {
 			flex.RemoveItem(categoriesTable)
 			app.SetFocus(flex)
 			return nil
@@ -101,7 +101,7 @@ func createNewCategoryForm() {
 	newCatForm.SetTitle("New Category").SetBorder(true)
 
 	newCatForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'q' || event.Rune() == 'h' {
+		if event.Key() == tcell.KeyEscape {
 			closeForm()
 			return nil
 		}
