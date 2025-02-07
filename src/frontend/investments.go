@@ -92,10 +92,15 @@ func createNewInvestmentForm() {
 
 	onSubmit := func() {
 		iDate, err := time.Parse("2006-01-02", dateInput.GetText())
-		if err != nil {
+		if err != nil || iCode == "" || iQty == 0 || iUnitprice <= 0 {
+			newInvForm.SetLabelColor(tcell.ColorRed)
 			return
 		}
+
 		backend.InsertInvestment(backend.Investment{Date: iDate, Code: iCode, Qty: iQty, Unitprice: iUnitprice})
+
+		updateInvestmentsTable()
+		closeForm()
 	}
 
 	dateInput = tview.NewInputField().
@@ -117,6 +122,8 @@ func createNewInvestmentForm() {
 		}).
 		AddButton("Add", onSubmit).
 		AddButton("Cancel", closeForm)
+
+	newInvForm.SetTitle("Investment Record").SetBorder(true)
 }
 
 func showNewInvestmentForm() {

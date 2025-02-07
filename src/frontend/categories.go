@@ -81,6 +81,11 @@ func createNewCategoryForm() {
 	}
 
 	onSubmit := func() {
+		if iName == "" {
+			newCatForm.SetLabelColor(tcell.ColorRed)
+			return
+		}
+
 		backend.InsertCategory(backend.Category{Name: iName, Desc: iDesc, IsIncome: iIncome})
 		updateCategoriesTable()
 		closeForm()
