@@ -15,6 +15,12 @@ import (
 var (
 	investmentsTable *tview.Table
 	newInvForm       *tview.Form
+	editingId        int
+
+	dateInput      *tview.InputField
+	codeInput      *tview.InputField
+	unitpriceInput *tview.InputField
+	qtyInput       *tview.InputField
 )
 
 func createInvestmentsTable() {
@@ -34,12 +40,23 @@ func createInvestmentsTable() {
 		} else if event.Rune() == 'a' {
 			showNewInvestmentForm()
 			return nil
-		} else if event.Rune() == 'd' {
+		} else if event.Rune() == 'd' { // delete currently hovered investment
 			row, _ := investmentsTable.GetSelection()
-			res, err := strconv.ParseInt(investmentsTable.GetCell(row, 0).Text, 10, 32)
+			res, err := strconv.ParseInt(strings.Trim(investmentsTable.GetCell(row, 0).Text, " "), 10, 32)
 			if err != nil {
 				panic(err)
 			}
+			backend.DeleteInvestment(int(res))
+			updateInvestmentsTable()
+		} else if event.Rune() == 'e' { // edit currently hovered investment
+			row, _ := investmentsTable.GetSelection()
+			id, _ := strconv.ParseInt(strings.Trim(investmentsTable.GetCell(row, 0).Text, " "), 10, 32)
+			date := strings.Trim(investmentsTable.GetCell(row, 1).Text, " ")
+			code := strings.Trim(investmentsTable.GetCell(row, 2).Text, " ")
+			unitprice := strings.Trim(investmentsTable.GetCell(row, 3).Text, " $")
+			qty := strings.Trim(investmentsTable.GetCell(row, 4).Text, " ")
+
+			showEditInvestmentForm(int(id), date, code, qty, unitprice)
 		}
 		return event
 	})
@@ -66,8 +83,8 @@ func updateInvestmentsTable() {
 				SetMaxWidth(4)).
 			SetCell(i+1, 1, tview.NewTableCell(date.Format(" 2006-01-02 ")).SetAlign(tview.AlignCenter).SetMaxWidth(12)).
 			SetCell(i+1, 2, tview.NewTableCell(" "+code+" ")).
-			SetCell(i+1, 3, tview.NewTableCell(fmt.Sprintf(" %.0f ", qty))).
-			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" $%.2f ", unitprice))).
+			SetCell(i+1, 3, tview.NewTableCell(fmt.Sprintf(" $%.2f ", unitprice))).
+			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" %.0f ", qty))).
 			SetCell(i+1, 5, tview.NewTableCell(fmt.Sprintf(" $%.2f ", unitprice*qty)))
 	}
 }
@@ -87,23 +104,36 @@ func createNewInvestmentForm() {
 		return regex0.MatchString(s) || regex1.MatchString(s) || regex2.MatchString(s)
 	}
 
-	var iCode string
-	var iQty, iUnitprice float32
-	var dateInput *tview.InputField
-
 	closeForm := func() {
 		flex.RemoveItem(newInvForm)
 		app.SetFocus(investmentsTable)
 	}
 
 	onSubmit := func() {
-		iDate, err := time.Parse("2006-01-02", dateInput.GetText())
-		if err != nil || iCode == "" || iQty == 0 || iUnitprice <= 0 {
+
+		code := codeInput.GetText()
+		qty, err := strconv.ParseFloat(qtyInput.GetText(), 32)
+		if err != nil {
+			panic(err)
+		}
+		unitprice, err := strconv.ParseFloat(unitpriceInput.GetText(), 32)
+		if err != nil {
+			panic(err)
+		}
+
+		date, err := time.Parse("2006-01-02", dateInput.GetText())
+		if err != nil || code == "" || qty == 0 || unitprice <= 0 {
 			newInvForm.SetLabelColor(tcell.ColorRed)
 			return
 		}
 
-		backend.InsertInvestment(backend.Investment{Date: iDate, Code: iCode, Qty: iQty, Unitprice: iUnitprice})
+		inv := backend.Investment{Date: date, Code: code, Qty: float32(qty), Unitprice: float32(unitprice)}
+		if editingId == -1 {
+			backend.InsertInvestment(inv)
+		} else {
+			backend.UpdateInvestment(editingId, inv)
+			editingId = -1
+		}
 
 		updateInvestmentsTable()
 		closeForm()
@@ -115,24 +145,44 @@ func createNewInvestmentForm() {
 		SetPlaceholder("YYYY-MM-DD").
 		SetAcceptanceFunc(isPartialDate)
 
+	codeInput = tview.NewInputField().
+		SetLabel("Stock Code").
+		SetFieldWidth(10)
+
+	unitpriceInput = tview.NewInputField().
+		SetLabel("Unit Price").
+		SetFieldWidth(7)
+
+	qtyInput = tview.NewInputField().
+		SetLabel("Qty").
+		SetFieldWidth(7)
+
 	newInvForm = tview.NewForm().
 		AddFormItem(dateInput).
-		AddInputField("Stock Code", "", 7, nil, func(v string) { iCode = v }).
-		AddInputField("Unitprice", "", 7, tview.InputFieldFloat, func(v string) {
-			res, _ := strconv.ParseFloat(v, 32)
-			iUnitprice = float32(res)
-		}).
-		AddInputField("Qty", "", 7, tview.InputFieldFloat, func(v string) {
-			res, _ := strconv.ParseFloat(v, 32)
-			iQty = float32(res)
-		}).
-		AddButton("Add", onSubmit).
+		AddFormItem(codeInput).AddFormItem(unitpriceInput).AddFormItem(qtyInput).
+		AddButton("Save", onSubmit).
 		AddButton("Cancel", closeForm)
 
 	newInvForm.SetTitle("Investment Record").SetBorder(true)
 }
 
 func showNewInvestmentForm() {
+	dateInput.SetText("")
+	codeInput.SetText("")
+	unitpriceInput.SetText("")
+	qtyInput.SetText("")
+	flex.AddItem(newInvForm, 55, 0, true)
+	app.SetFocus(newInvForm)
+}
+
+func showEditInvestmentForm(id int, date, code, qty, unitprice string) {
+	editingId = id
+
+	dateInput.SetText(date)
+	codeInput.SetText(code)
+	unitpriceInput.SetText(unitprice)
+	qtyInput.SetText(qty)
+
 	flex.AddItem(newInvForm, 55, 0, true)
 	app.SetFocus(newInvForm)
 }

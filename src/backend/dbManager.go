@@ -303,7 +303,7 @@ func UpdateRecord(id int, rec Record) {
 }
 
 func UpdateCategory(id int, cat Category) {
-	_, name, isIncome, desc := cat.spread()
+	_, name, isIncome, desc := cat.Spread()
 	_, err := db.Exec("UPDATE category SET cat_name = ?, cat_isincome = ?, cat_desc = ? WHERE cat_id = ?", name, isIncome, desc, id)
 	if err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
@@ -311,7 +311,7 @@ func UpdateCategory(id int, cat Category) {
 }
 
 func UpdateInvestment(id int, inv Investment) {
-	_, date, code, qty, unitprice := inv.spread()
+	_, date, code, qty, unitprice := inv.Spread()
 	_, err := db.Exec("UPDATE investment SET inv_date = ?, inv_code = ?, inv_qty = ?, inv_unitprice = ? WHERE inv_id = ?", date, code, qty, unitprice, id)
 	if err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
