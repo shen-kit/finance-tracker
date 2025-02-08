@@ -161,7 +161,10 @@ func createInvestmentForm() {
 		SetFieldWidth(7).
 		SetAcceptanceFunc(tview.InputFieldFloat)
 
-	invFormMsg = tview.NewTextView().SetSize(1, 35).SetDynamicColors(true)
+	invFormMsg = tview.NewTextView().
+		SetSize(1, 35).
+		SetDynamicColors(true).
+		SetScrollable(false)
 
 	invDetailsForm = tview.NewForm().
 		AddFormItem(invInDate).

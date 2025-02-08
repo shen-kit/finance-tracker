@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,7 +12,12 @@ import (
 
 var (
 	categoriesTable *tview.Table
-	catDetailsForm  *tview.Form
+
+	catDetailsForm   *tview.Form
+	catInName        *tview.InputField
+	catInDescription *tview.InputField
+	catInIsIncome    *tview.Checkbox
+	catFormMsg       *tview.TextView
 )
 
 func createCategoriesTable() {
@@ -72,29 +78,60 @@ func showCategoriesTable() {
 
 func createNewCategoryForm() {
 
-	var iName, iDesc string
-	var iIncome bool
-
 	closeForm := func() {
 		flex.RemoveItem(catDetailsForm)
 		app.SetFocus(categoriesTable)
 	}
 
+	parseForm := func() (backend.Category, error) {
+
+		if catInName.GetText() == "" || catInDescription.GetText() == "" {
+			return backend.Category{}, errors.New("All fields are required")
+		}
+
+		return backend.Category{
+				Name:     catInName.GetText(),
+				Desc:     catInDescription.GetText(),
+				IsIncome: catInIsIncome.IsChecked()},
+			nil
+	}
+
 	onSubmit := func() {
-		if iName == "" {
-			catDetailsForm.SetLabelColor(tcell.ColorRed)
+
+		cat, err := parseForm()
+		if err != nil {
+			catFormMsg.SetText("[red]" + err.Error())
 			return
 		}
 
-		backend.InsertCategory(backend.Category{Name: iName, Desc: iDesc, IsIncome: iIncome})
+		backend.InsertCategory(cat)
+
 		updateCategoriesTable()
 		closeForm()
 	}
 
+	catInName = tview.NewInputField().
+		SetLabel("Name").
+		SetFieldWidth(20)
+
+	catInDescription = tview.NewInputField().
+		SetLabel("Description").
+		SetFieldWidth(40)
+
+	catInIsIncome = tview.NewCheckbox().
+		SetLabel("Is Income?").
+		SetChecked(false)
+
+	catFormMsg = tview.NewTextView().
+		SetSize(1, 35).
+		SetDynamicColors(true).
+		SetScrollable(false)
+
 	catDetailsForm = tview.NewForm().
-		AddInputField("Name", "", 20, nil, func(v string) { iName = v }).
-		AddInputField("Description", "", 40, nil, func(v string) { iDesc = v }).
-		AddCheckbox("Is Income?", false, func(b bool) { iIncome = b }).
+		AddFormItem(catInName).
+		AddFormItem(catInDescription).
+		AddFormItem(catInIsIncome).
+		AddFormItem(catFormMsg).
 		AddButton("Add", onSubmit).
 		AddButton("Cancel", closeForm)
 

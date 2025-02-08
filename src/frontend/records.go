@@ -155,7 +155,10 @@ func createRecordForm() {
 		SetLabel("Description").
 		SetSize(4, 35)
 
-	recFormMsg = tview.NewTextView().SetSize(1, 35).SetDynamicColors(true)
+	recFormMsg = tview.NewTextView().
+		SetSize(1, 35).
+		SetDynamicColors(true).
+		SetScrollable(false)
 
 	recDetailsForm = tview.NewForm().
 		AddFormItem(recInDate).
