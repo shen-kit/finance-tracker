@@ -53,8 +53,8 @@ func createCategoriesTable() {
 			row, _ := categoriesTable.GetSelection()
 			id, _ := strconv.ParseInt(strings.TrimSpace(categoriesTable.GetCell(row, 0).Text), 10, 32)
 			name := strings.TrimSpace(categoriesTable.GetCell(row, 1).Text)
-			desc := strings.TrimSpace(categoriesTable.GetCell(row, 2).Text)
-			isIncome := strings.EqualFold("Income", strings.TrimSpace(categoriesTable.GetCell(row, 3).Text))
+			isIncome := strings.EqualFold("income", strings.TrimSpace(categoriesTable.GetCell(row, 2).Text))
+			desc := strings.TrimSpace(categoriesTable.GetCell(row, 3).Text)
 
 			catEditingId = int(id)
 			showNewCategoryForm(name, desc, isIncome)
@@ -170,10 +170,10 @@ func createNewCategoryForm() {
 	})
 }
 
-func showNewCategoryForm(name, desc string, isincome bool) {
+func showNewCategoryForm(name, desc string, isIncome bool) {
 	catInName.SetText(name)
 	catInDescription.SetText(desc)
-	catInIsIncome.SetChecked(isincome)
+	catInIsIncome.SetChecked(isIncome)
 	catFormMsg.SetText("")
 
 	flex.AddItem(catDetailsForm, 55, 0, true)
