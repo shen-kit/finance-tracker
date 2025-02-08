@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -94,7 +95,7 @@ func updateRecordsTable() {
 
 	for i, rec := range recs {
 		id, date, desc, amt, catId := rec.Spread()
-		catName := backend.GetCategoryName(catId)
+		catName := backend.GetCategoryNameFromId(catId)
 		recordsTable.
 			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
 				SetAlign(tview.AlignCenter).
@@ -139,7 +140,8 @@ func createRecordForm() {
 		SetPlaceholder("YYYY-MM-DD").
 		SetAcceptanceFunc(isPartialDate)
 
-	recInCat = tview.NewDropDown()
+	recInCat = tview.NewDropDown().
+		SetLabel("Category")
 
 	recInAmt = tview.NewInputField().
 		SetLabel("Amount").
@@ -148,7 +150,7 @@ func createRecordForm() {
 
 	recInDesc = tview.NewTextArea().
 		SetLabel("Description").
-		SetSize(30, 3)
+		SetSize(4, 35)
 
 	recDetailsForm = tview.NewForm().
 		AddFormItem(recInDate).
@@ -158,14 +160,50 @@ func createRecordForm() {
 		AddButton("Cancel", closeForm).
 		AddButton("Save", onSubmit)
 
+	recDetailsForm.SetBorder(true)
+
+	recDetailsForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyCtrlC {
+			closeForm()
+			return nil
+		}
+		return event
+	})
+
 }
 
 func parseRecForm() (backend.Record, bool) {
-	panic("unimplemented")
+	desc := recInDesc.GetText()
+
+	if recInAmt.GetText() == "" {
+		recDetailsForm.SetLabelColor(tcell.ColorRed)
+		return backend.Record{}, false
+	}
+	amt, err := strconv.ParseFloat(recInAmt.GetText(), 32)
+	if err != nil {
+		panic(err)
+	}
+
+	date, err := time.Parse("2006-01-02", recInDate.GetText())
+	if err != nil {
+		panic(err)
+	}
+	_, cname := recInCat.GetCurrentOption()
+	if cname == "" {
+		recDetailsForm.SetLabelColor(tcell.ColorRed)
+		return backend.Record{}, false
+	}
+	catId := backend.GetCategoryIdFromName(cname)
+
+	if amt == 0 || desc == "" {
+		recDetailsForm.SetLabelColor(tcell.ColorRed)
+		return backend.Record{}, false
+	}
+
+	return backend.Record{Date: date, Amt: float32(amt), Desc: desc, CatId: catId}, true
 }
 
 func showRecordsForm(date, desc, amt string, catId int) {
-
 	cats, err := backend.GetCategories()
 	if err != nil {
 		panic(err)

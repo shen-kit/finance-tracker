@@ -309,9 +309,15 @@ func GetRecordsPages() int8 {
 	return int8(math.Ceil(res))
 }
 
-func GetCategoryName(catId int) string {
+func GetCategoryNameFromId(catId int) string {
 	var res string
 	db.QueryRow("SELECT cat_name FROM category WHERE cat_id = ?", catId).Scan(&res)
+	return res
+}
+
+func GetCategoryIdFromName(catName string) int {
+	var res int
+	db.QueryRow("SELECT cat_id FROM category WHERE cat_name = ?", catName).Scan(&res)
 	return res
 }
 

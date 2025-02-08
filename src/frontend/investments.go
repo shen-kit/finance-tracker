@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,6 +23,7 @@ var (
 	invInUnitprice *tview.InputField
 	invInQty       *tview.InputField
 	invEditingId   int
+	invFormMsg     *tview.TextView
 )
 
 func createInvestmentsTable() {
@@ -125,10 +127,12 @@ func createInvestmentForm() {
 	}
 
 	onSubmit := func() {
-		inv, success := parseInvForm()
-		if !success {
+		inv, err := parseInvForm()
+		if err != nil {
+			invFormMsg.SetText("[red]" + err.Error())
 			return
 		}
+
 		if invEditingId == -1 {
 			backend.InsertInvestment(inv)
 		} else {
@@ -157,11 +161,14 @@ func createInvestmentForm() {
 		SetFieldWidth(7).
 		SetAcceptanceFunc(tview.InputFieldFloat)
 
+	invFormMsg = tview.NewTextView().SetSize(1, 35).SetDynamicColors(true)
+
 	invDetailsForm = tview.NewForm().
 		AddFormItem(invInDate).
 		AddFormItem(invInCode).AddFormItem(invInUnitprice).AddFormItem(invInQty).
 		AddButton("Cancel", closeForm).
-		AddButton("Save", onSubmit)
+		AddButton("Save", onSubmit).
+		AddFormItem(invFormMsg)
 
 	invDetailsForm.SetBorder(true)
 
@@ -175,26 +182,38 @@ func createInvestmentForm() {
 }
 
 /* Returns (Investment, success?) */
-func parseInvForm() (backend.Investment, bool) {
-	code := invInCode.GetText()
-	qty, err := strconv.ParseFloat(invInQty.GetText(), 32)
-	if err != nil {
-		panic(err)
-	}
-	unitprice, err := strconv.ParseFloat(invInUnitprice.GetText(), 32)
-	if err != nil {
-		panic(err)
-	}
-	date, err := time.Parse("2006-01-02", invInDate.GetText())
-	if err != nil {
-		panic(err)
-	}
-	if code == "" || qty == 0 || unitprice <= 0 {
-		invDetailsForm.SetLabelColor(tcell.ColorRed)
-		return backend.Investment{}, false
+func parseInvForm() (backend.Investment, error) {
+
+	fail := func(msg string) (backend.Investment, error) {
+		return backend.Investment{}, errors.New(msg)
 	}
 
-	return backend.Investment{Date: date, Code: code, Qty: float32(qty), Unitprice: float32(unitprice)}, true
+	for _, input := range []*tview.InputField{invInCode, invInDate, invInQty, invInUnitprice} {
+		if input.GetText() == "" {
+			return fail("All fields are required")
+		}
+	}
+
+	code := invInCode.GetText()
+
+	qty, err := strconv.ParseFloat(invInQty.GetText(), 32)
+	if err != nil || qty == 0 {
+		return fail("Quantity is invalid")
+	}
+
+	unitprice, err := strconv.ParseFloat(invInUnitprice.GetText(), 32)
+	if err != nil || unitprice <= 0 {
+		return fail("Unitprice is invalid")
+	}
+
+	date, err := time.Parse("2006-01-02", invInDate.GetText())
+	if err != nil {
+		return fail("Date must be in YYYY-MM-DD format")
+	}
+
+	return backend.Investment{
+			Date: date, Code: code, Qty: float32(qty), Unitprice: float32(unitprice)},
+		nil
 }
 
 func showInvestmentForm(date, code, unitprice, qty string) {
