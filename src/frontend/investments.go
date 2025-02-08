@@ -14,15 +14,15 @@ import (
 
 var (
 	investmentsTable *tview.Table
-	currentPage      int8 // currently viewed page
-	lastPageIdx      int8
+	invCurrentPage   int8 // currently viewed page
+	invLastPage      int8
 
-	newInvForm  *tview.Form
-	inDate      *tview.InputField
-	inCode      *tview.InputField
-	inUnitprice *tview.InputField
-	inQty       *tview.InputField
-	editingId   int
+	newInvForm     *tview.Form
+	invInDate      *tview.InputField
+	invInCode      *tview.InputField
+	invInUnitprice *tview.InputField
+	invInQty       *tview.InputField
+	invEditingId   int
 )
 
 func createInvestmentsTable() {
@@ -40,7 +40,7 @@ func createInvestmentsTable() {
 			app.SetFocus(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			editingId = -1
+			invEditingId = -1
 			showInvestmentForm("", "", "", "")
 			return nil
 		} else if event.Rune() == 'd' { // delete investment
@@ -59,12 +59,12 @@ func createInvestmentsTable() {
 			unitprice := strings.Trim(investmentsTable.GetCell(row, 3).Text, " $")
 			qty := strings.Trim(investmentsTable.GetCell(row, 4).Text, " ")
 
-			editingId = int(id)
+			invEditingId = int(id)
 			showInvestmentForm(date, code, qty, unitprice)
 		} else if event.Rune() == 'L' { // next page
-			changePage(currentPage + 1)
-		} else if event.Rune() == 'H' && currentPage > 0 { // previous page
-			changePage(currentPage - 1)
+			invChangePage(invCurrentPage + 1)
+		} else if event.Rune() == 'H' { // previous page
+			invChangePage(invCurrentPage - 1)
 		}
 		return event
 	})
@@ -72,21 +72,21 @@ func createInvestmentsTable() {
 	updateInvestmentsTable()
 }
 
-func changePage(page int8) {
-	if page < 0 || page > lastPageIdx {
+func invChangePage(page int8) {
+	if page < 0 || page > invLastPage {
 		return
 	}
-	currentPage = page
-	investmentsTable.SetTitle(fmt.Sprintf("Investments (%d/%d)", currentPage+1, lastPageIdx+1))
+	invCurrentPage = page
+	investmentsTable.SetTitle(fmt.Sprintf("Investments (%d/%d)", invCurrentPage+1, invLastPage+1))
 	updateInvestmentsTable()
 }
 
 /* Pulls data from the backend to update the table */
 func updateInvestmentsTable() {
 	investmentsTable.Clear()
-	lastPageIdx = backend.GetInvestmentsPages() - 1
+	invLastPage = backend.GetInvestmentsPages() - 1
 
-	invs, err := backend.GetInvestmentsRecent(int(currentPage))
+	invs, err := backend.GetInvestmentsRecent(int(invCurrentPage))
 	if err != nil {
 		panic(err)
 	}
@@ -111,14 +111,14 @@ func updateInvestmentsTable() {
 }
 
 func showInvestmentsTable() {
-	changePage(0) // always start on Page 0
+	invChangePage(0) // always start on Page 0
 	flex.AddItem(investmentsTable, 0, 1, true)
 	app.SetFocus(investmentsTable)
 }
 
 // INVESTMENT FORM
 
-func createNewInvestmentForm() {
+func createInvestmentForm() {
 
 	closeForm := func() {
 		flex.RemoveItem(newInvForm)
@@ -130,10 +130,10 @@ func createNewInvestmentForm() {
 		if !success {
 			return
 		}
-		if editingId == -1 {
+		if invEditingId == -1 {
 			backend.InsertInvestment(inv)
 		} else {
-			backend.UpdateInvestment(editingId, inv)
+			backend.UpdateInvestment(invEditingId, inv)
 		}
 		closeForm()
 	}
@@ -145,29 +145,29 @@ func createNewInvestmentForm() {
 		return regex0.MatchString(s) || regex1.MatchString(s) || regex2.MatchString(s)
 	}
 
-	inDate = tview.NewInputField().
+	invInDate = tview.NewInputField().
 		SetLabel("Date").
 		SetFieldWidth(10).
 		SetPlaceholder("YYYY-MM-DD").
 		SetAcceptanceFunc(isPartialDate)
 
-	inCode = tview.NewInputField().
+	invInCode = tview.NewInputField().
 		SetLabel("Stock Code").
 		SetFieldWidth(10)
 
-	inUnitprice = tview.NewInputField().
+	invInUnitprice = tview.NewInputField().
 		SetLabel("Unit Price").
 		SetFieldWidth(7).
 		SetAcceptanceFunc(tview.InputFieldFloat)
 
-	inQty = tview.NewInputField().
+	invInQty = tview.NewInputField().
 		SetLabel("Qty").
 		SetFieldWidth(7).
 		SetAcceptanceFunc(tview.InputFieldFloat)
 
 	newInvForm = tview.NewForm().
-		AddFormItem(inDate).
-		AddFormItem(inCode).AddFormItem(inUnitprice).AddFormItem(inQty).
+		AddFormItem(invInDate).
+		AddFormItem(invInCode).AddFormItem(invInUnitprice).AddFormItem(invInQty).
 		AddButton("Cancel", closeForm).
 		AddButton("Save", onSubmit)
 
@@ -184,16 +184,16 @@ func createNewInvestmentForm() {
 
 /* Returns (Investment, success?) */
 func parseForm() (backend.Investment, bool) {
-	code := inCode.GetText()
-	qty, err := strconv.ParseFloat(inQty.GetText(), 32)
+	code := invInCode.GetText()
+	qty, err := strconv.ParseFloat(invInQty.GetText(), 32)
 	if err != nil {
 		panic(err)
 	}
-	unitprice, err := strconv.ParseFloat(inUnitprice.GetText(), 32)
+	unitprice, err := strconv.ParseFloat(invInUnitprice.GetText(), 32)
 	if err != nil {
 		panic(err)
 	}
-	date, err := time.Parse("2006-01-02", inDate.GetText())
+	date, err := time.Parse("2006-01-02", invInDate.GetText())
 	if err != nil {
 		panic(err)
 	}
@@ -210,15 +210,15 @@ Set id=-1 if adding a new investment (other fields ignored).
 Fill with details for editing an existing investment.
 */
 func showInvestmentForm(date, code, unitprice, qty string) {
-	if editingId == -1 {
+	if invEditingId == -1 {
 		newInvForm.SetTitle("Add Investment")
 	} else {
 		newInvForm.SetTitle("Edit Investment Details")
 	}
-	inDate.SetText(date)
-	inCode.SetText(code)
-	inUnitprice.SetText(unitprice)
-	inQty.SetText(qty)
+	invInDate.SetText(date)
+	invInCode.SetText(code)
+	invInUnitprice.SetText(unitprice)
+	invInQty.SetText(qty)
 
 	flex.AddItem(newInvForm, 55, 0, true)
 	newInvForm.SetFocus(0)

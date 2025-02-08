@@ -17,10 +17,15 @@ func CreateTUI() {
 	pages = tview.NewPages()
 
 	createHomepage()
+
 	createCategoriesTable()
 	createNewCategoryForm()
+
 	createInvestmentsTable()
-	createNewInvestmentForm()
+	createInvestmentForm()
+
+	createRecordsTable()
+	createRecordForm()
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or ctrl+C/q when on homepage
@@ -79,7 +84,7 @@ func createHomepage() {
 		AddItem("  Add Record            ", "", 0, nil).
 		AddItem("  View Month Summary    ", "", 0, nil).
 		AddItem("  View Year Summary     ", "", 0, nil).
-		AddItem("  Records               ", "", 0, nil).
+		AddItem("  Records               ", "", 0, showRecordsTable).
 		AddItem("  Categories            ", "", 0, showCategoriesTable).
 		AddItem("  Investments           ", "", 0, showInvestmentsTable).
 		AddItem("  Quit                  ", "", 0, func() { app.Stop() })

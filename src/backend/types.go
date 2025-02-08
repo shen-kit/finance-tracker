@@ -15,7 +15,7 @@ type Record struct {
 	CatId int
 }
 
-func (rec Record) spread() (int, time.Time, string, float32, int) {
+func (rec Record) Spread() (int, time.Time, string, float32, int) {
 	return rec.Id, rec.Date, rec.Desc, rec.Amt, rec.CatId
 }
 

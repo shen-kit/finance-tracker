@@ -177,7 +177,7 @@ func CreateDummyData() {
 // Inserting Rows
 
 func InsertRecord(rec Record) {
-	_, date, desc, amt, cat_id := rec.spread()
+	_, date, desc, amt, cat_id := rec.Spread()
 	if _, err := insRecStmt.Exec(date, desc, amt, cat_id); err != nil {
 		log.Fatal("Failed to insert into category: ", err.Error())
 	}
@@ -306,7 +306,7 @@ func GetInvestmentsPages() int8 {
 // Updating Rows
 
 func UpdateRecord(id int, rec Record) {
-	_, date, desc, amt, catId := rec.spread()
+	_, date, desc, amt, catId := rec.Spread()
 	_, err := db.Exec("UPDATE record SET rec_date = ?, rec_desc = ?, rec_amt = ?, cat_id = ? WHERE rec_id = ?", date, desc, amt, catId, id)
 	if err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
