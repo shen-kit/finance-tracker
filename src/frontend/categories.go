@@ -11,7 +11,7 @@ import (
 
 var (
 	categoriesTable *tview.Table
-	newCatForm      *tview.Form
+	catDetailsForm  *tview.Form
 )
 
 func createCategoriesTable() {
@@ -76,13 +76,13 @@ func createNewCategoryForm() {
 	var iIncome bool
 
 	closeForm := func() {
-		flex.RemoveItem(newCatForm)
+		flex.RemoveItem(catDetailsForm)
 		app.SetFocus(categoriesTable)
 	}
 
 	onSubmit := func() {
 		if iName == "" {
-			newCatForm.SetLabelColor(tcell.ColorRed)
+			catDetailsForm.SetLabelColor(tcell.ColorRed)
 			return
 		}
 
@@ -91,16 +91,16 @@ func createNewCategoryForm() {
 		closeForm()
 	}
 
-	newCatForm = tview.NewForm().
+	catDetailsForm = tview.NewForm().
 		AddInputField("Name", "", 20, nil, func(v string) { iName = v }).
 		AddInputField("Description", "", 40, nil, func(v string) { iDesc = v }).
 		AddCheckbox("Is Income?", false, func(b bool) { iIncome = b }).
 		AddButton("Add", onSubmit).
 		AddButton("Cancel", closeForm)
 
-	newCatForm.SetTitle("New Category").SetBorder(true)
+	catDetailsForm.SetTitle("New Category").SetBorder(true)
 
-	newCatForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	catDetailsForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlC {
 			closeForm()
 			return nil
@@ -110,6 +110,6 @@ func createNewCategoryForm() {
 }
 
 func showNewCategoryForm() {
-	flex.AddItem(newCatForm, 55, 0, true)
-	app.SetFocus(newCatForm)
+	flex.AddItem(catDetailsForm, 55, 0, true)
+	app.SetFocus(catDetailsForm)
 }

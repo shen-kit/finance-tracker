@@ -15,11 +15,11 @@ var (
 	recCurrentPage int8
 	recLastPage    int8
 
-	newRecForm *tview.Form
-	recInDate  *tview.InputField
-	recInDesc  *tview.InputField
-	recInAmt   *tview.InputField
-	recInCatId *tview.InputField
+	recDetailsForm *tview.Form
+	recInDate      *tview.InputField
+	recInDesc      *tview.TextArea
+	recInAmt       *tview.InputField
+	recInCat       *tview.DropDown
 
 	recEditingId int
 )
@@ -40,7 +40,7 @@ func createRecordsTable() {
 			return nil
 		} else if event.Rune() == 'a' {
 			recEditingId = -1
-			showRecordsForm()
+			showRecordsForm("", "", "", 0)
 			return nil
 		} else if event.Rune() == 'd' { // delete investment
 			row, _ := recordsTable.GetSelection()
@@ -59,7 +59,7 @@ func createRecordsTable() {
 			// qty := strings.Trim(recordsTable.GetCell(row, 4).Text, " ")
 
 			recEditingId = int(id)
-			showRecordsForm()
+			showRecordsForm("", "", "", 0)
 		} else if event.Rune() == 'L' { // next page
 			recChangePage(recCurrentPage + 1)
 		} else if event.Rune() == 'H' { // previous page
@@ -115,9 +115,78 @@ func showRecordsTable() {
 }
 
 func createRecordForm() {
+	closeForm := func() {
+		flex.RemoveItem(recDetailsForm)
+		app.SetFocus(recordsTable)
+	}
+
+	onSubmit := func() {
+		rec, success := parseRecForm()
+		if !success {
+			return
+		}
+		if recEditingId == -1 {
+			backend.InsertRecord(rec)
+		} else {
+			backend.UpdateRecord(recEditingId, rec)
+		}
+		closeForm()
+	}
+
+	recInDate = tview.NewInputField().
+		SetLabel("Date").
+		SetFieldWidth(10).
+		SetPlaceholder("YYYY-MM-DD").
+		SetAcceptanceFunc(isPartialDate)
+
+	recInCat = tview.NewDropDown()
+
+	recInAmt = tview.NewInputField().
+		SetLabel("Amount").
+		SetFieldWidth(7).
+		SetAcceptanceFunc(tview.InputFieldFloat)
+
+	recInDesc = tview.NewTextArea().
+		SetLabel("Description").
+		SetSize(30, 3)
+
+	recDetailsForm = tview.NewForm().
+		AddFormItem(recInDate).
+		AddFormItem(recInCat).
+		AddFormItem(recInAmt).
+		AddFormItem(recInDesc).
+		AddButton("Cancel", closeForm).
+		AddButton("Save", onSubmit)
 
 }
 
-func showRecordsForm() {
+func parseRecForm() (backend.Record, bool) {
 	panic("unimplemented")
+}
+
+func showRecordsForm(date, desc, amt string, catId int) {
+
+	cats, err := backend.GetCategories()
+	if err != nil {
+		panic(err)
+	}
+
+	catNames := make([]string, len(cats))
+	catOpt := 0
+	for i, cat := range cats {
+		catNames[i] = cat.Name
+		if cat.Id == catId {
+			catOpt = i
+		}
+	}
+	recInCat.SetOptions(catNames, nil)
+
+	recInDate.SetText(date)
+	recInDesc.SetText(desc, true)
+	recInAmt.SetText(amt)
+	recInCat.SetCurrentOption(catOpt)
+
+	flex.AddItem(recDetailsForm, 55, 0, true)
+	recDetailsForm.SetFocus(0)
+	app.SetFocus(recDetailsForm)
 }

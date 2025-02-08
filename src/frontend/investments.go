@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +16,7 @@ var (
 	invCurrentPage   int8 // currently viewed page
 	invLastPage      int8
 
-	newInvForm     *tview.Form
+	invDetailsForm *tview.Form
 	invInDate      *tview.InputField
 	invInCode      *tview.InputField
 	invInUnitprice *tview.InputField
@@ -121,12 +120,12 @@ func showInvestmentsTable() {
 func createInvestmentForm() {
 
 	closeForm := func() {
-		flex.RemoveItem(newInvForm)
+		flex.RemoveItem(invDetailsForm)
 		app.SetFocus(investmentsTable)
 	}
 
 	onSubmit := func() {
-		inv, success := parseForm()
+		inv, success := parseInvForm()
 		if !success {
 			return
 		}
@@ -136,13 +135,6 @@ func createInvestmentForm() {
 			backend.UpdateInvestment(invEditingId, inv)
 		}
 		closeForm()
-	}
-
-	isPartialDate := func(s string, r rune) bool {
-		regex0 := regexp.MustCompile(`^\d{0,4}$`)
-		regex1 := regexp.MustCompile(`^\d{4}-\d{0,2}$`)
-		regex2 := regexp.MustCompile(`^\d{4}-\d{2}-\d{0,2}$`)
-		return regex0.MatchString(s) || regex1.MatchString(s) || regex2.MatchString(s)
 	}
 
 	invInDate = tview.NewInputField().
@@ -165,15 +157,15 @@ func createInvestmentForm() {
 		SetFieldWidth(7).
 		SetAcceptanceFunc(tview.InputFieldFloat)
 
-	newInvForm = tview.NewForm().
+	invDetailsForm = tview.NewForm().
 		AddFormItem(invInDate).
 		AddFormItem(invInCode).AddFormItem(invInUnitprice).AddFormItem(invInQty).
 		AddButton("Cancel", closeForm).
 		AddButton("Save", onSubmit)
 
-	newInvForm.SetBorder(true)
+	invDetailsForm.SetBorder(true)
 
-	newInvForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	invDetailsForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlC {
 			closeForm()
 			return nil
@@ -183,7 +175,7 @@ func createInvestmentForm() {
 }
 
 /* Returns (Investment, success?) */
-func parseForm() (backend.Investment, bool) {
+func parseInvForm() (backend.Investment, bool) {
 	code := invInCode.GetText()
 	qty, err := strconv.ParseFloat(invInQty.GetText(), 32)
 	if err != nil {
@@ -198,29 +190,25 @@ func parseForm() (backend.Investment, bool) {
 		panic(err)
 	}
 	if code == "" || qty == 0 || unitprice <= 0 {
-		newInvForm.SetLabelColor(tcell.ColorRed)
+		invDetailsForm.SetLabelColor(tcell.ColorRed)
 		return backend.Investment{}, false
 	}
 
 	return backend.Investment{Date: date, Code: code, Qty: float32(qty), Unitprice: float32(unitprice)}, true
 }
 
-/*
-Set id=-1 if adding a new investment (other fields ignored).
-Fill with details for editing an existing investment.
-*/
 func showInvestmentForm(date, code, unitprice, qty string) {
 	if invEditingId == -1 {
-		newInvForm.SetTitle("Add Investment")
+		invDetailsForm.SetTitle("Add Investment")
 	} else {
-		newInvForm.SetTitle("Edit Investment Details")
+		invDetailsForm.SetTitle("Edit Investment Details")
 	}
 	invInDate.SetText(date)
 	invInCode.SetText(code)
 	invInUnitprice.SetText(unitprice)
 	invInQty.SetText(qty)
 
-	flex.AddItem(newInvForm, 55, 0, true)
-	newInvForm.SetFocus(0)
-	app.SetFocus(newInvForm)
+	flex.AddItem(invDetailsForm, 55, 0, true)
+	invDetailsForm.SetFocus(0)
+	app.SetFocus(invDetailsForm)
 }
