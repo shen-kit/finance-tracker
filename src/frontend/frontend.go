@@ -81,7 +81,7 @@ func createHomepage() {
 	lv := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
-		AddItem("  Add Record            ", "", 0, nil).
+		AddItem("  Add Record            ", "", 0, func() { showRecordsForm(-1, "", "", "", "") }).
 		AddItem("  View Month Summary    ", "", 0, nil).
 		AddItem("  View Year Summary     ", "", 0, nil).
 		AddItem("  Records               ", "", 0, showRecordsTable).

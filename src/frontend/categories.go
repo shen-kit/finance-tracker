@@ -38,8 +38,7 @@ func createCategoriesTable() {
 			app.SetFocus(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			catEditingId = -1
-			showNewCategoryForm("", "", false)
+			showNewCategoryForm(-1, "", "", false)
 			return nil
 		} else if event.Rune() == 'd' { // delete category
 			row, _ := categoriesTable.GetSelection()
@@ -56,8 +55,7 @@ func createCategoriesTable() {
 			isIncome := strings.EqualFold("income", strings.TrimSpace(categoriesTable.GetCell(row, 2).Text))
 			desc := strings.TrimSpace(categoriesTable.GetCell(row, 3).Text)
 
-			catEditingId = int(id)
-			showNewCategoryForm(name, desc, isIncome)
+			showNewCategoryForm(int(id), name, desc, isIncome)
 			return nil
 		}
 		return event
@@ -170,7 +168,14 @@ func createNewCategoryForm() {
 	})
 }
 
-func showNewCategoryForm(name, desc string, isIncome bool) {
+func showNewCategoryForm(id int, name, desc string, isIncome bool) {
+	catEditingId = id
+	if catEditingId == -1 {
+		invDetailsForm.SetTitle("Add Category")
+	} else {
+		invDetailsForm.SetTitle("Edit Category Details")
+	}
+
 	catInName.SetText(name)
 	catInDescription.SetText(desc)
 	catInIsIncome.SetChecked(isIncome)

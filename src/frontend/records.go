@@ -41,8 +41,7 @@ func createRecordsTable() {
 			app.SetFocus(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			recEditingId = -1
-			showRecordsForm("", "", "", "")
+			showRecordsForm(-1, "", "", "", "")
 			return nil
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := recordsTable.GetSelection()
@@ -60,8 +59,7 @@ func createRecordsTable() {
 			desc := strings.TrimSpace(recordsTable.GetCell(row, 3).Text)
 			amt := strings.Trim(recordsTable.GetCell(row, 4).Text, " $")
 
-			recEditingId = int(id)
-			showRecordsForm(date, desc, amt, catName)
+			showRecordsForm(int(id), date, desc, amt, catName)
 			return nil
 		} else if event.Rune() == 'L' { // next page
 			recChangePage(recCurrentPage + 1)
@@ -122,7 +120,11 @@ func showRecordsTable() {
 func createRecordForm() {
 	closeForm := func() {
 		flex.RemoveItem(recDetailsForm)
-		app.SetFocus(recordsTable)
+		if flex.GetItemCount() == 1 { // if Add Record directly from homepage
+			app.SetFocus(flex)
+		} else {
+			app.SetFocus(recordsTable)
+		}
 	}
 
 	onSubmit := func() {
@@ -219,7 +221,15 @@ func parseRecForm() (backend.Record, error) {
 	return backend.Record{Date: date, Amt: float32(amt), Desc: desc, CatId: catId}, nil
 }
 
-func showRecordsForm(date, desc, amt, catName string) {
+func showRecordsForm(id int, date, desc, amt, catName string) {
+
+	recEditingId = id
+	if id == -1 {
+		recDetailsForm.SetTitle("Add Record")
+	} else {
+		recDetailsForm.SetTitle("Edit Record Details")
+	}
+
 	cats, err := backend.GetCategories()
 	if err != nil {
 		panic(err)

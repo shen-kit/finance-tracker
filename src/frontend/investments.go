@@ -41,8 +41,7 @@ func createInvestmentsTable() {
 			app.SetFocus(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			invEditingId = -1
-			showInvestmentForm("", "", "", "")
+			showInvestmentForm(-1, "", "", "", "")
 			return nil
 		} else if event.Rune() == 'd' { // delete investment
 			row, _ := investmentsTable.GetSelection()
@@ -60,8 +59,7 @@ func createInvestmentsTable() {
 			unitprice := strings.Trim(investmentsTable.GetCell(row, 3).Text, " $")
 			qty := strings.TrimSpace(investmentsTable.GetCell(row, 4).Text)
 
-			invEditingId = int(id)
-			showInvestmentForm(date, code, qty, unitprice)
+			showInvestmentForm(int(id), date, code, qty, unitprice)
 		} else if event.Rune() == 'L' { // next page
 			invChangePage(invCurrentPage + 1)
 		} else if event.Rune() == 'H' { // previous page
@@ -219,7 +217,8 @@ func parseInvForm() (backend.Investment, error) {
 		nil
 }
 
-func showInvestmentForm(date, code, unitprice, qty string) {
+func showInvestmentForm(id int, date, code, unitprice, qty string) {
+	invEditingId = id
 	if invEditingId == -1 {
 		invDetailsForm.SetTitle("Add Investment")
 	} else {
