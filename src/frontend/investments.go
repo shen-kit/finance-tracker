@@ -169,9 +169,9 @@ func createInvestmentForm() {
 	invDetailsForm = tview.NewForm().
 		AddFormItem(invInDate).
 		AddFormItem(invInCode).AddFormItem(invInUnitprice).AddFormItem(invInQty).
-		AddButton("Cancel", closeForm).
+		AddFormItem(invFormMsg).
 		AddButton("Save", onSubmit).
-		AddFormItem(invFormMsg)
+		AddButton("Cancel", closeForm)
 
 	invDetailsForm.SetBorder(true)
 

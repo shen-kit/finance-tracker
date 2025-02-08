@@ -165,9 +165,9 @@ func createRecordForm() {
 		AddFormItem(recInCat).
 		AddFormItem(recInAmt).
 		AddFormItem(recInDesc).
-		AddButton("Cancel", closeForm).
+		AddFormItem(recFormMsg).
 		AddButton("Save", onSubmit).
-		AddFormItem(recFormMsg)
+		AddButton("Cancel", closeForm)
 
 	recDetailsForm.SetBorder(true)
 
