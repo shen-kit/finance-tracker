@@ -152,6 +152,15 @@ func createRecordForm() {
 	recInCat = tview.NewDropDown().
 		SetLabel("Category")
 
+	recInCat.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'j' || event.Key() == tcell.KeyCtrlN {
+			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+		} else if event.Rune() == 'k' || event.Key() == tcell.KeyCtrlP {
+			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+		}
+		return event
+	})
+
 	recInAmt = tview.NewInputField().
 		SetLabel("Amount").
 		SetFieldWidth(7).
@@ -193,8 +202,8 @@ func parseRecForm() (backend.Record, error) {
 		return backend.Record{}, errors.New(msg)
 	}
 
-	if recInDate.GetText() == "" || recInAmt.GetText() == "" {
-		return fail("Please enter a date and amount")
+	if recInDate.GetText() == "" || recInAmt.GetText() == "" || recInDesc.GetText() == "" {
+		return fail("All fields are required")
 	}
 
 	date, err := time.Parse("2006-01-02", recInDate.GetText())
@@ -209,9 +218,6 @@ func parseRecForm() (backend.Record, error) {
 	catId := backend.GetCategoryIdFromName(cname)
 
 	desc := recInDesc.GetText()
-	if desc == "" {
-		return fail("Please enter a description")
-	}
 
 	amt, err := strconv.ParseFloat(recInAmt.GetText(), 32)
 	if err != nil || amt == 0 {
