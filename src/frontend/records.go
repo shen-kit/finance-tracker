@@ -46,7 +46,7 @@ func createRecordsTable() {
 			return nil
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := recordsTable.GetSelection()
-			res, err := strconv.ParseInt(strings.Trim(recordsTable.GetCell(row, 0).Text, " "), 10, 32)
+			res, err := strconv.ParseInt(strings.TrimSpace(recordsTable.GetCell(row, 0).Text), 10, 32)
 			if err != nil {
 				panic(err)
 			}
@@ -54,10 +54,10 @@ func createRecordsTable() {
 			updateRecordsTable()
 		} else if event.Rune() == 'e' { // edit record
 			row, _ := recordsTable.GetSelection()
-			id, _ := strconv.ParseInt(strings.Trim(recordsTable.GetCell(row, 0).Text, " "), 10, 32)
-			date := strings.Trim(recordsTable.GetCell(row, 1).Text, " ")
-			catName := strings.Trim(recordsTable.GetCell(row, 2).Text, " ")
-			desc := strings.Trim(recordsTable.GetCell(row, 3).Text, " ")
+			id, _ := strconv.ParseInt(strings.TrimSpace(recordsTable.GetCell(row, 0).Text), 10, 32)
+			date := strings.TrimSpace(recordsTable.GetCell(row, 1).Text)
+			catName := strings.TrimSpace(recordsTable.GetCell(row, 2).Text)
+			desc := strings.TrimSpace(recordsTable.GetCell(row, 3).Text)
 			amt := strings.Trim(recordsTable.GetCell(row, 4).Text, " $")
 
 			recEditingId = int(id)

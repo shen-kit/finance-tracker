@@ -46,7 +46,7 @@ func createInvestmentsTable() {
 			return nil
 		} else if event.Rune() == 'd' { // delete investment
 			row, _ := investmentsTable.GetSelection()
-			res, err := strconv.ParseInt(strings.Trim(investmentsTable.GetCell(row, 0).Text, " "), 10, 32)
+			res, err := strconv.ParseInt(strings.TrimSpace(investmentsTable.GetCell(row, 0).Text), 10, 32)
 			if err != nil {
 				panic(err)
 			}
@@ -55,10 +55,10 @@ func createInvestmentsTable() {
 		} else if event.Rune() == 'e' { // edit investment
 			row, _ := investmentsTable.GetSelection()
 			id, _ := strconv.ParseInt(strings.Trim(investmentsTable.GetCell(row, 0).Text, " "), 10, 32)
-			date := strings.Trim(investmentsTable.GetCell(row, 1).Text, " ")
-			code := strings.Trim(investmentsTable.GetCell(row, 2).Text, " ")
+			date := strings.TrimSpace(investmentsTable.GetCell(row, 1).Text)
+			code := strings.TrimSpace(investmentsTable.GetCell(row, 2).Text)
 			unitprice := strings.Trim(investmentsTable.GetCell(row, 3).Text, " $")
-			qty := strings.Trim(investmentsTable.GetCell(row, 4).Text, " ")
+			qty := strings.TrimSpace(investmentsTable.GetCell(row, 4).Text)
 
 			invEditingId = int(id)
 			showInvestmentForm(date, code, qty, unitprice)

@@ -43,7 +43,7 @@ func createCategoriesTable() {
 			return nil
 		} else if event.Rune() == 'd' { // delete category
 			row, _ := categoriesTable.GetSelection()
-			res, err := strconv.ParseInt(strings.Trim(categoriesTable.GetCell(row, 0).Text, " "), 10, 32)
+			res, err := strconv.ParseInt(strings.TrimSpace(categoriesTable.GetCell(row, 0).Text), 10, 32)
 			if err != nil {
 				panic(err)
 			}
@@ -51,10 +51,10 @@ func createCategoriesTable() {
 			updateCategoriesTable()
 		} else if event.Rune() == 'e' { // edit category
 			row, _ := categoriesTable.GetSelection()
-			id, _ := strconv.ParseInt(strings.Trim(categoriesTable.GetCell(row, 0).Text, " "), 10, 32)
-			name := strings.Trim(categoriesTable.GetCell(row, 1).Text, " ")
-			desc := strings.Trim(categoriesTable.GetCell(row, 2).Text, " ")
-			isIncome := strings.ToUpper(categoriesTable.GetCell(row, 3).Text) == "INCOME"
+			id, _ := strconv.ParseInt(strings.TrimSpace(categoriesTable.GetCell(row, 0).Text), 10, 32)
+			name := strings.TrimSpace(categoriesTable.GetCell(row, 1).Text)
+			desc := strings.TrimSpace(categoriesTable.GetCell(row, 2).Text)
+			isIncome := strings.EqualFold("Income", strings.TrimSpace(categoriesTable.GetCell(row, 3).Text))
 
 			catEditingId = int(id)
 			showNewCategoryForm(name, desc, isIncome)
