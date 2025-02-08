@@ -3,6 +3,7 @@ package frontend
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -18,6 +19,8 @@ var (
 	catInDescription *tview.InputField
 	catInIsIncome    *tview.Checkbox
 	catFormMsg       *tview.TextView
+
+	catEditingId int
 )
 
 func createCategoriesTable() {
@@ -35,7 +38,26 @@ func createCategoriesTable() {
 			app.SetFocus(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			showNewCategoryForm()
+			catEditingId = -1
+			showNewCategoryForm("", "", false)
+			return nil
+		} else if event.Rune() == 'd' { // delete category
+			row, _ := categoriesTable.GetSelection()
+			res, err := strconv.ParseInt(strings.Trim(categoriesTable.GetCell(row, 0).Text, " "), 10, 32)
+			if err != nil {
+				panic(err)
+			}
+			backend.DeleteCategory(int(res))
+			updateCategoriesTable()
+		} else if event.Rune() == 'e' { // edit category
+			row, _ := categoriesTable.GetSelection()
+			id, _ := strconv.ParseInt(strings.Trim(categoriesTable.GetCell(row, 0).Text, " "), 10, 32)
+			name := strings.Trim(categoriesTable.GetCell(row, 1).Text, " ")
+			desc := strings.Trim(categoriesTable.GetCell(row, 2).Text, " ")
+			isIncome := strings.ToUpper(categoriesTable.GetCell(row, 3).Text) == "INCOME"
+
+			catEditingId = int(id)
+			showNewCategoryForm(name, desc, isIncome)
 			return nil
 		}
 		return event
@@ -104,8 +126,11 @@ func createNewCategoryForm() {
 			return
 		}
 
-		backend.InsertCategory(cat)
-
+		if catEditingId == -1 {
+			backend.InsertCategory(cat)
+		} else {
+			backend.UpdateCategory(catEditingId, cat)
+		}
 		updateCategoriesTable()
 		closeForm()
 	}
@@ -119,8 +144,7 @@ func createNewCategoryForm() {
 		SetFieldWidth(40)
 
 	catInIsIncome = tview.NewCheckbox().
-		SetLabel("Is Income?").
-		SetChecked(false)
+		SetLabel("Is Income?")
 
 	catFormMsg = tview.NewTextView().
 		SetSize(1, 35).
@@ -146,7 +170,12 @@ func createNewCategoryForm() {
 	})
 }
 
-func showNewCategoryForm() {
+func showNewCategoryForm(name, desc string, isincome bool) {
+	catInName.SetText(name)
+	catInDescription.SetText(desc)
+	catInIsIncome.SetChecked(isincome)
+	catFormMsg.SetText("")
+
 	flex.AddItem(catDetailsForm, 55, 0, true)
 	app.SetFocus(catDetailsForm)
 }

@@ -42,9 +42,9 @@ func createRecordsTable() {
 			return nil
 		} else if event.Rune() == 'a' {
 			recEditingId = -1
-			showRecordsForm("", "", "", 0)
+			showRecordsForm("", "", "", "")
 			return nil
-		} else if event.Rune() == 'd' { // delete investment
+		} else if event.Rune() == 'd' { // delete record
 			row, _ := recordsTable.GetSelection()
 			res, err := strconv.ParseInt(strings.Trim(recordsTable.GetCell(row, 0).Text, " "), 10, 32)
 			if err != nil {
@@ -52,20 +52,23 @@ func createRecordsTable() {
 			}
 			backend.DeleteRecord(int(res))
 			updateRecordsTable()
-		} else if event.Rune() == 'e' { // edit investment
+		} else if event.Rune() == 'e' { // edit record
 			row, _ := recordsTable.GetSelection()
 			id, _ := strconv.ParseInt(strings.Trim(recordsTable.GetCell(row, 0).Text, " "), 10, 32)
-			// date := strings.Trim(recordsTable.GetCell(row, 1).Text, " ")
-			// code := strings.Trim(recordsTable.GetCell(row, 2).Text, " ")
-			// unitprice := strings.Trim(recordsTable.GetCell(row, 3).Text, " $")
-			// qty := strings.Trim(recordsTable.GetCell(row, 4).Text, " ")
+			date := strings.Trim(recordsTable.GetCell(row, 1).Text, " ")
+			catName := strings.Trim(recordsTable.GetCell(row, 2).Text, " ")
+			desc := strings.Trim(recordsTable.GetCell(row, 3).Text, " ")
+			amt := strings.Trim(recordsTable.GetCell(row, 4).Text, " $")
 
 			recEditingId = int(id)
-			showRecordsForm("", "", "", 0)
+			showRecordsForm(date, desc, amt, catName)
+			return nil
 		} else if event.Rune() == 'L' { // next page
 			recChangePage(recCurrentPage + 1)
+			return nil
 		} else if event.Rune() == 'H' { // previous page
 			recChangePage(recCurrentPage - 1)
+			return nil
 		}
 		return event
 	})
@@ -104,7 +107,7 @@ func updateRecordsTable() {
 			SetCell(i+1, 1, tview.NewTableCell(date.Format(" 2006-01-02 ")).
 				SetAlign(tview.AlignCenter).
 				SetMaxWidth(12)).
-			SetCell(i+1, 2, tview.NewTableCell(catName)).
+			SetCell(i+1, 2, tview.NewTableCell(" "+catName+" ")).
 			SetCell(i+1, 3, tview.NewTableCell(" "+desc+" ")).
 			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" $%.2f ", amt)))
 	}
@@ -134,6 +137,7 @@ func createRecordForm() {
 		} else {
 			backend.UpdateRecord(recEditingId, rec)
 		}
+		updateRecordsTable()
 		closeForm()
 	}
 
@@ -215,7 +219,7 @@ func parseRecForm() (backend.Record, error) {
 	return backend.Record{Date: date, Amt: float32(amt), Desc: desc, CatId: catId}, nil
 }
 
-func showRecordsForm(date, desc, amt string, catId int) {
+func showRecordsForm(date, desc, amt, catName string) {
 	cats, err := backend.GetCategories()
 	if err != nil {
 		panic(err)
@@ -225,7 +229,7 @@ func showRecordsForm(date, desc, amt string, catId int) {
 	catOpt := 0
 	for i, cat := range cats {
 		catNames[i] = cat.Name
-		if cat.Id == catId {
+		if cat.Name == catName {
 			catOpt = i
 		}
 	}
