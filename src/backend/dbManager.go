@@ -303,6 +303,18 @@ func GetInvestmentsPages() int8 {
 	return int8(math.Ceil(res))
 }
 
+func GetRecordsPages() int8 {
+	var res float64
+	db.QueryRow("SELECT COUNT(*) / ? FROM record", float32(PAGE_ROWS)).Scan(&res)
+	return int8(math.Ceil(res))
+}
+
+func GetCategoryName(catId int) string {
+	var res string
+	db.QueryRow("SELECT cat_name FROM category WHERE cat_id = ?", catId).Scan(&res)
+	return res
+}
+
 // Updating Rows
 
 func UpdateRecord(id int, rec Record) {

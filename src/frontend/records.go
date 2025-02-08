@@ -80,7 +80,7 @@ func recChangePage(page int8) {
 
 func updateRecordsTable() {
 	recordsTable.Clear()
-	recLastPage = 3 // TODO: update with backend
+	recLastPage = backend.GetRecordsPages() - 1
 
 	recs, err := backend.GetRecordsRecent(int(recCurrentPage))
 	if err != nil {
@@ -94,7 +94,7 @@ func updateRecordsTable() {
 
 	for i, rec := range recs {
 		id, date, desc, amt, catId := rec.Spread()
-		catName := fmt.Sprintf(" category %d ", catId) // TODO: fetch from backend
+		catName := backend.GetCategoryName(catId)
 		recordsTable.
 			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
 				SetAlign(tview.AlignCenter).
