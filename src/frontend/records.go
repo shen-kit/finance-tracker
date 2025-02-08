@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,8 +22,8 @@ var (
 	recInDesc      *tview.TextArea
 	recInAmt       *tview.InputField
 	recInCat       *tview.DropDown
-
-	recEditingId int
+	recEditingId   int
+	recFormMsg     *tview.TextView
 )
 
 func createRecordsTable() {
@@ -122,10 +123,12 @@ func createRecordForm() {
 	}
 
 	onSubmit := func() {
-		rec, success := parseRecForm()
-		if !success {
+		rec, err := parseRecForm()
+		if err != nil {
+			recFormMsg.SetText("[red]" + err.Error())
 			return
 		}
+
 		if recEditingId == -1 {
 			backend.InsertRecord(rec)
 		} else {
@@ -136,7 +139,7 @@ func createRecordForm() {
 
 	recInDate = tview.NewInputField().
 		SetLabel("Date").
-		SetFieldWidth(10).
+		SetFieldWidth(11).
 		SetPlaceholder("YYYY-MM-DD").
 		SetAcceptanceFunc(isPartialDate)
 
@@ -152,13 +155,16 @@ func createRecordForm() {
 		SetLabel("Description").
 		SetSize(4, 35)
 
+	recFormMsg = tview.NewTextView().SetSize(1, 35).SetDynamicColors(true)
+
 	recDetailsForm = tview.NewForm().
 		AddFormItem(recInDate).
 		AddFormItem(recInCat).
 		AddFormItem(recInAmt).
 		AddFormItem(recInDesc).
 		AddButton("Cancel", closeForm).
-		AddButton("Save", onSubmit)
+		AddButton("Save", onSubmit).
+		AddFormItem(recFormMsg)
 
 	recDetailsForm.SetBorder(true)
 
@@ -172,35 +178,38 @@ func createRecordForm() {
 
 }
 
-func parseRecForm() (backend.Record, bool) {
-	desc := recInDesc.GetText()
+func parseRecForm() (backend.Record, error) {
 
-	if recInAmt.GetText() == "" {
-		recDetailsForm.SetLabelColor(tcell.ColorRed)
-		return backend.Record{}, false
+	fail := func(msg string) (backend.Record, error) {
+		return backend.Record{}, errors.New(msg)
 	}
-	amt, err := strconv.ParseFloat(recInAmt.GetText(), 32)
-	if err != nil {
-		panic(err)
+
+	if recInDate.GetText() == "" || recInAmt.GetText() == "" {
+		return fail("Please enter a date and amount")
 	}
 
 	date, err := time.Parse("2006-01-02", recInDate.GetText())
 	if err != nil {
-		panic(err)
+		return fail("Date musy be in YYYY-MM-DD format")
 	}
+
 	_, cname := recInCat.GetCurrentOption()
 	if cname == "" {
-		recDetailsForm.SetLabelColor(tcell.ColorRed)
-		return backend.Record{}, false
+		return fail("Please choose a category")
 	}
 	catId := backend.GetCategoryIdFromName(cname)
 
-	if amt == 0 || desc == "" {
-		recDetailsForm.SetLabelColor(tcell.ColorRed)
-		return backend.Record{}, false
+	desc := recInDesc.GetText()
+	if desc == "" {
+		return fail("Please enter a description")
 	}
 
-	return backend.Record{Date: date, Amt: float32(amt), Desc: desc, CatId: catId}, true
+	amt, err := strconv.ParseFloat(recInAmt.GetText(), 32)
+	if err != nil || amt == 0 {
+		return fail("Invalid amount entered")
+	}
+
+	return backend.Record{Date: date, Amt: float32(amt), Desc: desc, CatId: catId}, nil
 }
 
 func showRecordsForm(date, desc, amt string, catId int) {
@@ -223,6 +232,7 @@ func showRecordsForm(date, desc, amt string, catId int) {
 	recInDesc.SetText(desc, true)
 	recInAmt.SetText(amt)
 	recInCat.SetCurrentOption(catOpt)
+	recFormMsg.SetText("")
 
 	flex.AddItem(recDetailsForm, 55, 0, true)
 	recDetailsForm.SetFocus(0)

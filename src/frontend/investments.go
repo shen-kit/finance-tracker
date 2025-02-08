@@ -143,7 +143,7 @@ func createInvestmentForm() {
 
 	invInDate = tview.NewInputField().
 		SetLabel("Date").
-		SetFieldWidth(10).
+		SetFieldWidth(11).
 		SetPlaceholder("YYYY-MM-DD").
 		SetAcceptanceFunc(isPartialDate)
 
@@ -188,8 +188,8 @@ func parseInvForm() (backend.Investment, error) {
 		return backend.Investment{}, errors.New(msg)
 	}
 
-	for _, input := range []*tview.InputField{invInCode, invInDate, invInQty, invInUnitprice} {
-		if input.GetText() == "" {
+	for _, field := range []*tview.InputField{invInCode, invInDate, invInQty, invInUnitprice} {
+		if field.GetText() == "" {
 			return fail("All fields are required")
 		}
 	}
@@ -226,6 +226,7 @@ func showInvestmentForm(date, code, unitprice, qty string) {
 	invInCode.SetText(code)
 	invInUnitprice.SetText(unitprice)
 	invInQty.SetText(qty)
+	invFormMsg.SetText("")
 
 	flex.AddItem(invDetailsForm, 55, 0, true)
 	invDetailsForm.SetFocus(0)
