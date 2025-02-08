@@ -251,6 +251,9 @@ func showRecordsForm(id int, date, desc, amt, catName string) {
 	}
 	recInCat.SetOptions(catNames, nil)
 
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
 	recInDate.SetText(date)
 	recInDesc.SetText(desc, true)
 	recInAmt.SetText(amt)
