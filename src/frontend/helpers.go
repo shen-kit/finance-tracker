@@ -46,7 +46,11 @@ func changePage(tv *tableView, newPage int8) {
 		return
 	}
 	tv.curPage = newPage
-	tv.table.SetTitle(fmt.Sprintf("%s (%d/%d)", tv.title, newPage+1, tv.maxPage+1))
+	title := fmt.Sprintf("%s", tv.title)
+	if tv.maxPage > 0 {
+		title += fmt.Sprintf(" (%d/%d)", newPage+1, tv.maxPage+1)
+	}
+	tv.table.SetTitle(title)
 	tv.fUpdate()
 }
 
@@ -104,3 +108,15 @@ func (t *MyTable) getCellString(row, col int) string {
 }
 
 // FORM
+
+func formInputCapture(onCancel, onSubmit func()) func(*tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyCtrlC {
+			onCancel()
+			return nil
+		} else if event.Key() == tcell.KeyEnter && event.Modifiers() == tcell.ModCtrl {
+			onSubmit()
+		}
+		return event
+	}
+}

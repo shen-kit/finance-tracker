@@ -16,8 +16,9 @@ func CreateTUI() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
-	createCategoriesTable()
-	createNewCategoryForm()
+	catTv := createCategoriesTable()
+	cf := createCategoryForm()
+	setCategoryTableKeybinds(catTv, cf)
 
 	createInvestmentsTable()
 	createInvestmentForm()
@@ -26,7 +27,7 @@ func CreateTUI() {
 	rf := createRecordForm()
 	setRecordTableKeybinds(recTv, rf)
 
-	createHomepage(recTv, rf)
+	createHomepage(recTv, catTv, rf)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or ctrl+C/q when on homepage
@@ -61,17 +62,17 @@ func setTheme() {
 	}
 }
 
-func createHomepage(recTv *tableView, rf recordForm) {
+func createHomepage(recTv, catTv *tableView, rf recordForm) {
 	flex = tview.NewFlex()
 
 	lv := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
-		AddItem("  Add Record            ", "", 0, func() { showRecordsForm(flex, rf, -1, "", "", "", "") }).
+		AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
 		AddItem("  View Month Summary    ", "", 0, nil).
 		AddItem("  View Year Summary     ", "", 0, nil).
 		AddItem("  Records               ", "", 0, func() { showTable(flex, recTv) }).
-		AddItem("  Categories            ", "", 0, showCategoriesTable).
+		AddItem("  Categories            ", "", 0, func() { showTable(flex, catTv) }).
 		AddItem("  Investments           ", "", 0, showInvestmentsTable).
 		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
 

@@ -29,7 +29,7 @@ func createRecordsTable() *tableView {
 	/* ===== Helper Functions ===== */
 
 	// returns a closure with the tableView saved
-	createUpdateRecTableClosure := func(tv *tableView) func() {
+	createUpdateTableClosure := func(tv *tableView) func() {
 		return func() {
 			createTableHeaders(tv)
 			tv.maxPage = backend.GetRecordsPages() - 1
@@ -59,7 +59,7 @@ func createRecordsTable() *tableView {
 		curPage: 0,
 		maxPage: 0,
 	}
-	updateRecordsTable = createUpdateRecTableClosure(tv)
+	updateRecordsTable = createUpdateTableClosure(tv)
 	tv.fUpdate = updateRecordsTable
 	return tv
 }
@@ -71,7 +71,7 @@ func setRecordTableKeybinds(tv *tableView, rf recordForm) {
 			tv.hide(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			showRecordsForm(table, rf, -1, "", "", "", "")
+			showRecordForm(table, rf, -1, "", "", "", "")
 			return nil
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := table.GetSelection()
@@ -85,7 +85,7 @@ func setRecordTableKeybinds(tv *tableView, rf recordForm) {
 			catName := table.getCellString(row, 2)
 			desc := table.getCellString(row, 3)
 			amt := table.getCellString(row, 4)
-			showRecordsForm(table, rf, id, date, desc, amt, catName)
+			showRecordForm(table, rf, id, date, desc, amt, catName)
 			return nil
 		} else if event.Rune() == 'L' { // next page
 			changePage(tv, tv.curPage+1)
@@ -153,7 +153,7 @@ func createRecordForm() recordForm {
 	}
 }
 
-func showRecordsForm(lastWidget tview.Primitive, rf recordForm, id int, date, desc, amt, catName string) {
+func showRecordForm(lastWidget tview.Primitive, rf recordForm, id int, date, desc, amt, catName string) {
 
 	/* ===== Helper Functions ===== */
 	catOpt := 0
@@ -186,7 +186,7 @@ func showRecordsForm(lastWidget tview.Primitive, rf recordForm, id int, date, de
 	}
 
 	onSubmit := func() {
-		rec, err := parseRecForm(rf.iDate, rf.iAmt, rf.iDesc, rf.iCat)
+		rec, err := parseRecForm(rf)
 		if err != nil {
 			rf.tvMsg.SetText("[red]" + err.Error())
 			return
@@ -214,13 +214,7 @@ func showRecordsForm(lastWidget tview.Primitive, rf recordForm, id int, date, de
 	setCategoryOptions()
 	setInputFieldValues()
 
-	rf.form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyCtrlC {
-			closeForm()
-			return nil
-		}
-		return event
-	})
+	rf.form.SetInputCapture(formInputCapture(closeForm, onSubmit))
 	rf.form.GetButton(rf.form.GetButtonIndex("Cancel")).SetSelectedFunc(closeForm)
 	rf.form.GetButton(rf.form.GetButtonIndex("Save")).SetSelectedFunc(onSubmit)
 
@@ -231,30 +225,30 @@ func showRecordsForm(lastWidget tview.Primitive, rf recordForm, id int, date, de
 }
 
 /* Takes input from the form and returns a Record object */
-func parseRecForm(inDate, inAmt *tview.InputField, inDesc *tview.TextArea, inCat *tview.DropDown) (backend.Record, error) {
+func parseRecForm(rf recordForm) (backend.Record, error) {
 
 	fail := func(msg string) (backend.Record, error) {
 		return backend.Record{}, errors.New(msg)
 	}
 
-	if inDate.GetText() == "" || inAmt.GetText() == "" || inDesc.GetText() == "" {
+	if rf.iDate.GetText() == "" || rf.iAmt.GetText() == "" || rf.iDesc.GetText() == "" {
 		return fail("All fields are required")
 	}
 
-	date, err := time.Parse("2006-01-02", inDate.GetText())
+	date, err := time.Parse("2006-01-02", rf.iDate.GetText())
 	if err != nil {
 		return fail("Date musy be in YYYY-MM-DD format")
 	}
 
-	_, cname := inCat.GetCurrentOption()
+	_, cname := rf.iCat.GetCurrentOption()
 	if cname == "" {
 		return fail("Please choose a category")
 	}
 	catId := backend.GetCategoryIdFromName(cname)
 
-	desc := inDesc.GetText()
+	desc := rf.iDesc.GetText()
 
-	amt, err := strconv.ParseFloat(inAmt.GetText(), 32)
+	amt, err := strconv.ParseFloat(rf.iAmt.GetText(), 32)
 	if err != nil || amt == 0 {
 		return fail("Invalid amount entered")
 	}
