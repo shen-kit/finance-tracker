@@ -61,42 +61,42 @@ func dbRowsToInvestments(rows *sql.Rows) ([]Investment, error) {
 	return investments, nil
 }
 
-func dbRowsToRecords(rows *sql.Rows) ([]Record, error) {
+func dbRowsToRecords(rows *sql.Rows) []Record {
 	var records []Record
 
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var rec Record
 		if err := rows.Scan(&rec.Id, &rec.Date, &rec.Desc, &rec.Amt, &rec.CatId); err != nil {
-			return nil, err
+			panic(err)
 		}
 		records = append(records, rec)
 	}
 
 	// check for errors then return
 	if err := rows.Err(); err != nil {
-		return nil, err
+		panic(err)
 	}
-	return records, nil
+	return records
 }
 
-func dbRowsToCategories(rows *sql.Rows) ([]Category, error) {
+func dbRowsToCategories(rows *sql.Rows) []Category {
 	var categories []Category
 
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var cat Category
 		if err := rows.Scan(&cat.Id, &cat.Name, &cat.Desc, &cat.IsIncome); err != nil {
-			return nil, err
+			panic(err)
 		}
 		categories = append(categories, cat)
 	}
 
 	// check for errors then return
 	if err := rows.Err(); err != nil {
-		return nil, err
+		panic(err)
 	}
-	return categories, nil
+	return categories
 }
 
 type FilterOpts struct {

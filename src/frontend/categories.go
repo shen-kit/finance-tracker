@@ -65,10 +65,7 @@ func createCategoriesTable() {
 func updateCategoriesTable() {
 	categoriesTable.Clear()
 
-	cats, err := backend.GetCategories()
-	if err != nil {
-		panic(err)
-	}
+	cats := backend.GetCategories()
 
 	headers := strings.Split(" ID : Name : Type : Description ", ":")
 	for i, h := range headers {

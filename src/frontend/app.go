@@ -16,16 +16,17 @@ func CreateTUI() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
-	createHomepage()
-
 	createCategoriesTable()
 	createNewCategoryForm()
 
 	createInvestmentsTable()
 	createInvestmentForm()
 
-	createRecordsTable()
-	createRecordForm()
+	recTv := createRecordsTable()
+	rf := createRecordForm()
+	setRecordTableKeybinds(recTv, rf)
+
+	createHomepage(recTv, rf)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or ctrl+C/q when on homepage
@@ -45,23 +46,7 @@ func CreateTUI() {
 }
 
 func setTheme() {
-	// from https://catppuccin.com/palette
-
-	// // mocha
-	// tview.Styles = tview.Theme{
-	// 	PrimitiveBackgroundColor:    tcell.NewRGBColor(30, 30, 46),    // Main background color for primitives.
-	// 	ContrastBackgroundColor:     tcell.NewRGBColor(148, 226, 213), // Background color for contrasting elements.
-	// 	MoreContrastBackgroundColor: tcell.NewRGBColor(250, 179, 135), // Background color for even more contrasting elements.
-	// 	BorderColor:                 tcell.NewRGBColor(127, 132, 156), // Box borders.
-	// 	TitleColor:                  tcell.NewRGBColor(205, 214, 244), // Box titles.
-	// 	PrimaryTextColor:            tcell.NewRGBColor(205, 214, 244), // Primary text.
-	// 	SecondaryTextColor:          tcell.NewRGBColor(186, 194, 222), // Secondary text (e.g. labels).
-	// 	TertiaryTextColor:           tcell.NewRGBColor(166, 173, 200), // Tertiary text (e.g. subtitles, notes).
-	// 	InverseTextColor:            tcell.NewRGBColor(30, 30, 46),    // Text on primary-colored backgrounds.
-	// 	ContrastSecondaryTextColor:  tcell.NewRGBColor(49, 50, 68),    // Secondary text on ContrastBackgroundColor-colored backgrounds.
-	// }
-
-	// frappe
+	// frappe -> https://catppuccin.com/palette
 	tview.Styles = tview.Theme{
 		PrimitiveBackgroundColor:    tcell.NewRGBColor(48, 52, 70),    // Main background color for primitives.
 		ContrastBackgroundColor:     tcell.NewRGBColor(129, 200, 190), // Background color for contrasting elements.
@@ -74,17 +59,18 @@ func setTheme() {
 		InverseTextColor:            tcell.NewRGBColor(48, 52, 70),    // Text on primary-colored backgrounds.
 		ContrastSecondaryTextColor:  tcell.NewRGBColor(65, 69, 89),    // Secondary text on ContrastBackgroundColor-colored backgrounds.
 	}
-
 }
 
-func createHomepage() {
+func createHomepage(recTv *tableView, rf recordForm) {
+	flex = tview.NewFlex()
+
 	lv := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
-		AddItem("  Add Record            ", "", 0, func() { showRecordsForm(-1, "", "", "", "") }).
+		AddItem("  Add Record            ", "", 0, func() { showRecordsForm(flex, rf, -1, "", "", "", "") }).
 		AddItem("  View Month Summary    ", "", 0, nil).
 		AddItem("  View Year Summary     ", "", 0, nil).
-		AddItem("  Records               ", "", 0, showRecordsTable).
+		AddItem("  Records               ", "", 0, func() { showTable(flex, recTv) }).
 		AddItem("  Categories            ", "", 0, showCategoriesTable).
 		AddItem("  Investments           ", "", 0, showInvestmentsTable).
 		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
@@ -102,8 +88,7 @@ func createHomepage() {
 
 	lv.SetTitle("Options").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
-	flex = tview.NewFlex().
-		AddItem(lv, 30, 0, true)
+	flex.AddItem(lv, 30, 0, true)
 
 	pages.AddPage("main", flex, true, true)
 }

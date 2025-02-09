@@ -12,147 +12,109 @@ import (
 	"github.com/shen-kit/finance-tracker/backend"
 )
 
-var (
-	recordsTable   *tview.Table
-	recCurrentPage int8
-	recLastPage    int8
+// global function to update the records table using the tableView object
+var updateRecordsTable func()
 
-	recDetailsForm *tview.Form
-	recInDate      *tview.InputField
-	recInDesc      *tview.TextArea
-	recInAmt       *tview.InputField
-	recInCat       *tview.DropDown
-	recEditingId   int
-	recFormMsg     *tview.TextView
-)
+type recordForm struct {
+	form  *tview.Form
+	iDate *tview.InputField
+	iCat  *tview.DropDown
+	iAmt  *tview.InputField
+	iDesc *tview.TextArea
+	tvMsg *tview.TextView
+}
 
-func createRecordsTable() {
-	recordsTable = tview.NewTable().
-		SetBorders(false).
-		SetSeparator(tview.Borders.Vertical).
-		SetFixed(1, 0).
-		SetSelectable(true, false)
+func createRecordsTable() *tableView {
 
-	recordsTable.SetBorder(true).SetBorderPadding(1, 1, 2, 2)
+	/* ===== Helper Functions ===== */
 
-	recordsTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// returns a closure with the tableView saved
+	createUpdateRecTableClosure := func(tv *tableView) func() {
+		return func() {
+			createTableHeaders(tv)
+			tv.maxPage = backend.GetRecordsPages() - 1
+			recs := backend.GetRecordsRecent(tv.curPage)
+
+			for i, rec := range recs {
+				id, date, desc, amt, catId := rec.Spread()
+				catName := backend.GetCategoryNameFromId(catId)
+				tv.table.
+					SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
+						SetAlign(tview.AlignCenter)).
+					SetCell(i+1, 1, tview.NewTableCell(date.Format(" 2006-01-02 ")).
+						SetAlign(tview.AlignCenter)).
+					SetCell(i+1, 2, tview.NewTableCell(" "+catName+" ")).
+					SetCell(i+1, 3, tview.NewTableCell(" "+desc+" ")).
+					SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" $%.2f ", amt)))
+			}
+		}
+	}
+
+	/* ===== Function Body ===== */
+	table := createMyTable()
+	tv := &tableView{
+		table:   table,
+		title:   "Records",
+		headers: strings.Split(" ID : Date : Category : Description : Amount ", ":"),
+		curPage: 0,
+		maxPage: 0,
+	}
+	updateRecordsTable = createUpdateRecTableClosure(tv)
+	tv.fUpdate = updateRecordsTable
+	return tv
+}
+
+func setRecordTableKeybinds(tv *tableView, rf recordForm) {
+	table := tv.table
+	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' || event.Rune() == 'h' || event.Key() == tcell.KeyCtrlC {
-			flex.RemoveItem(recordsTable)
-			app.SetFocus(flex)
+			tv.hide(flex)
 			return nil
 		} else if event.Rune() == 'a' {
-			showRecordsForm(-1, "", "", "", "")
+			showRecordsForm(table, rf, -1, "", "", "", "")
 			return nil
 		} else if event.Rune() == 'd' { // delete record
-			row, _ := recordsTable.GetSelection()
-			res, err := strconv.ParseInt(strings.TrimSpace(recordsTable.GetCell(row, 0).Text), 10, 32)
-			if err != nil {
-				panic(err)
-			}
-			backend.DeleteRecord(int(res))
-			updateRecordsTable()
+			row, _ := table.GetSelection()
+			id := table.getCellInt(row, 0)
+			backend.DeleteRecord(id)
+			tv.fUpdate()
 		} else if event.Rune() == 'e' { // edit record
-			row, _ := recordsTable.GetSelection()
-			id, _ := strconv.ParseInt(strings.TrimSpace(recordsTable.GetCell(row, 0).Text), 10, 32)
-			date := strings.TrimSpace(recordsTable.GetCell(row, 1).Text)
-			catName := strings.TrimSpace(recordsTable.GetCell(row, 2).Text)
-			desc := strings.TrimSpace(recordsTable.GetCell(row, 3).Text)
-			amt := strings.Trim(recordsTable.GetCell(row, 4).Text, " $")
-
-			showRecordsForm(int(id), date, desc, amt, catName)
+			row, _ := table.GetSelection()
+			id := table.getCellInt(row, 0)
+			date := table.getCellString(row, 1)
+			catName := table.getCellString(row, 2)
+			desc := table.getCellString(row, 3)
+			amt := table.getCellString(row, 4)
+			showRecordsForm(table, rf, id, date, desc, amt, catName)
 			return nil
 		} else if event.Rune() == 'L' { // next page
-			recChangePage(recCurrentPage + 1)
+			changePage(tv, tv.curPage+1)
 			return nil
 		} else if event.Rune() == 'H' { // previous page
-			recChangePage(recCurrentPage - 1)
+			changePage(tv, tv.curPage-1)
 			return nil
 		}
 		return event
 	})
 }
 
-func recChangePage(page int8) {
-	if page < 0 || page > recLastPage {
-		return
-	}
-	recCurrentPage = page
-	recordsTable.SetTitle(fmt.Sprintf("Records (%d/%d)", recCurrentPage+1, recLastPage+1))
-	updateRecordsTable()
-}
+func createRecordForm() recordForm {
+	var form *tview.Form
+	var inDate, inAmt *tview.InputField
+	var inDesc *tview.TextArea
+	var inCat *tview.DropDown
+	var formMsg *tview.TextView
 
-func updateRecordsTable() {
-	recordsTable.Clear()
-	recLastPage = backend.GetRecordsPages() - 1
-
-	recs, err := backend.GetRecordsRecent(int(recCurrentPage))
-	if err != nil {
-		panic(err)
-	}
-
-	headers := strings.Split(" ID : Date : Category : Description : Amount ", ":")
-	for i, h := range headers {
-		recordsTable.SetCell(0, i, tview.NewTableCell(h).SetSelectable(false).SetStyle(tcell.StyleDefault.Bold(true)))
-	}
-
-	for i, rec := range recs {
-		id, date, desc, amt, catId := rec.Spread()
-		catName := backend.GetCategoryNameFromId(catId)
-		recordsTable.
-			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
-				SetAlign(tview.AlignCenter).
-				SetMaxWidth(4)).
-			SetCell(i+1, 1, tview.NewTableCell(date.Format(" 2006-01-02 ")).
-				SetAlign(tview.AlignCenter).
-				SetMaxWidth(12)).
-			SetCell(i+1, 2, tview.NewTableCell(" "+catName+" ")).
-			SetCell(i+1, 3, tview.NewTableCell(" "+desc+" ")).
-			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" $%.2f ", amt)))
-	}
-}
-
-func showRecordsTable() {
-	recChangePage(0)
-	flex.AddItem(recordsTable, 0, 1, true)
-	app.SetFocus(recordsTable)
-}
-
-func createRecordForm() {
-	closeForm := func() {
-		flex.RemoveItem(recDetailsForm)
-		if flex.GetItemCount() == 1 { // if Add Record directly from homepage
-			app.SetFocus(flex)
-		} else {
-			app.SetFocus(recordsTable)
-		}
-	}
-
-	onSubmit := func() {
-		rec, err := parseRecForm()
-		if err != nil {
-			recFormMsg.SetText("[red]" + err.Error())
-			return
-		}
-
-		if recEditingId == -1 {
-			backend.InsertRecord(rec)
-		} else {
-			backend.UpdateRecord(recEditingId, rec)
-		}
-		updateRecordsTable()
-		closeForm()
-	}
-
-	recInDate = tview.NewInputField().
+	inDate = tview.NewInputField().
 		SetLabel("Date").
 		SetFieldWidth(11).
 		SetPlaceholder("YYYY-MM-DD").
 		SetAcceptanceFunc(isPartialDate)
 
-	recInCat = tview.NewDropDown().
+	inCat = tview.NewDropDown().
 		SetLabel("Category")
 
-	recInCat.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	inCat.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'j' || event.Key() == tcell.KeyCtrlN {
 			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
 		} else if event.Rune() == 'k' || event.Key() == tcell.KeyCtrlP {
@@ -161,106 +123,141 @@ func createRecordForm() {
 		return event
 	})
 
-	recInAmt = tview.NewInputField().
+	inAmt = tview.NewInputField().
 		SetLabel("Amount").
 		SetFieldWidth(7).
 		SetAcceptanceFunc(tview.InputFieldFloat)
 
-	recInDesc = tview.NewTextArea().
+	inDesc = tview.NewTextArea().
 		SetLabel("Description").
 		SetSize(4, 35)
 
-	recFormMsg = tview.NewTextView().
+	formMsg = tview.NewTextView().
 		SetSize(1, 35).
 		SetDynamicColors(true).
 		SetScrollable(false)
 
-	recDetailsForm = tview.NewForm().
-		AddFormItem(recInDate).
-		AddFormItem(recInCat).
-		AddFormItem(recInAmt).
-		AddFormItem(recInDesc).
-		AddFormItem(recFormMsg).
-		AddButton("Save", onSubmit).
-		AddButton("Cancel", closeForm)
+	form = tview.NewForm().
+		AddFormItem(inDate).
+		AddFormItem(inCat).
+		AddFormItem(inAmt).
+		AddFormItem(inDesc).
+		AddFormItem(formMsg).
+		AddButton("Save", nil).
+		AddButton("Cancel", nil)
 
-	recDetailsForm.SetBorder(true)
+	form.SetBorder(true)
 
-	recDetailsForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	return recordForm{
+		form: form, iDate: inDate, iAmt: inAmt, iCat: inCat, iDesc: inDesc, tvMsg: formMsg,
+	}
+}
+
+func showRecordsForm(lastWidget tview.Primitive, rf recordForm, id int, date, desc, amt, catName string) {
+
+	/* ===== Helper Functions ===== */
+	catOpt := 0
+	setCategoryOptions := func() {
+		cats := backend.GetCategories()
+		catNames := make([]string, len(cats))
+		for i, cat := range cats {
+			catNames[i] = cat.Name
+			if cat.Name == catName {
+				catOpt = i
+			}
+		}
+		rf.iCat.SetOptions(catNames, nil)
+	}
+
+	setInputFieldValues := func() {
+		if date == "" {
+			date = time.Now().Format("2006-01-02")
+		}
+		rf.iDate.SetText(date)
+		rf.iDesc.SetText(desc, true)
+		rf.iAmt.SetText(amt)
+		rf.iCat.SetCurrentOption(catOpt)
+		rf.tvMsg.SetText("")
+	}
+
+	closeForm := func() {
+		flex.RemoveItem(rf.form)
+		app.SetFocus(lastWidget)
+	}
+
+	onSubmit := func() {
+		rec, err := parseRecForm(rf.iDate, rf.iAmt, rf.iDesc, rf.iCat)
+		if err != nil {
+			rf.tvMsg.SetText("[red]" + err.Error())
+			return
+		}
+
+		if id == -1 {
+			backend.InsertRecord(rec)
+		} else {
+			backend.UpdateRecord(id, rec)
+		}
+
+		updateRecordsTable()
+		closeForm()
+	}
+
+	/* ===== Function Body ===== */
+
+	// set title
+	if id == -1 {
+		rf.form.SetTitle("Add Record")
+	} else {
+		rf.form.SetTitle("Edit Record Details")
+	}
+
+	setCategoryOptions()
+	setInputFieldValues()
+
+	rf.form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlC {
 			closeForm()
 			return nil
 		}
 		return event
 	})
+	rf.form.GetButton(rf.form.GetButtonIndex("Cancel")).SetSelectedFunc(closeForm)
+	rf.form.GetButton(rf.form.GetButtonIndex("Save")).SetSelectedFunc(onSubmit)
 
+	// display + focus form
+	flex.AddItem(rf.form, 55, 0, true)
+	rf.form.SetFocus(0)
+	app.SetFocus(rf.form)
 }
 
-func parseRecForm() (backend.Record, error) {
+/* Takes input from the form and returns a Record object */
+func parseRecForm(inDate, inAmt *tview.InputField, inDesc *tview.TextArea, inCat *tview.DropDown) (backend.Record, error) {
 
 	fail := func(msg string) (backend.Record, error) {
 		return backend.Record{}, errors.New(msg)
 	}
 
-	if recInDate.GetText() == "" || recInAmt.GetText() == "" || recInDesc.GetText() == "" {
+	if inDate.GetText() == "" || inAmt.GetText() == "" || inDesc.GetText() == "" {
 		return fail("All fields are required")
 	}
 
-	date, err := time.Parse("2006-01-02", recInDate.GetText())
+	date, err := time.Parse("2006-01-02", inDate.GetText())
 	if err != nil {
 		return fail("Date musy be in YYYY-MM-DD format")
 	}
 
-	_, cname := recInCat.GetCurrentOption()
+	_, cname := inCat.GetCurrentOption()
 	if cname == "" {
 		return fail("Please choose a category")
 	}
 	catId := backend.GetCategoryIdFromName(cname)
 
-	desc := recInDesc.GetText()
+	desc := inDesc.GetText()
 
-	amt, err := strconv.ParseFloat(recInAmt.GetText(), 32)
+	amt, err := strconv.ParseFloat(inAmt.GetText(), 32)
 	if err != nil || amt == 0 {
 		return fail("Invalid amount entered")
 	}
 
 	return backend.Record{Date: date, Amt: float32(amt), Desc: desc, CatId: catId}, nil
-}
-
-func showRecordsForm(id int, date, desc, amt, catName string) {
-
-	recEditingId = id
-	if id == -1 {
-		recDetailsForm.SetTitle("Add Record")
-	} else {
-		recDetailsForm.SetTitle("Edit Record Details")
-	}
-
-	cats, err := backend.GetCategories()
-	if err != nil {
-		panic(err)
-	}
-
-	catNames := make([]string, len(cats))
-	catOpt := 0
-	for i, cat := range cats {
-		catNames[i] = cat.Name
-		if cat.Name == catName {
-			catOpt = i
-		}
-	}
-	recInCat.SetOptions(catNames, nil)
-
-	if date == "" {
-		date = time.Now().Format("2006-01-02")
-	}
-	recInDate.SetText(date)
-	recInDesc.SetText(desc, true)
-	recInAmt.SetText(amt)
-	recInCat.SetCurrentOption(catOpt)
-	recFormMsg.SetText("")
-
-	flex.AddItem(recDetailsForm, 55, 0, true)
-	recDetailsForm.SetFocus(0)
-	app.SetFocus(recDetailsForm)
 }

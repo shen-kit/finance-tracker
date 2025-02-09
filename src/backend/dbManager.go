@@ -222,10 +222,10 @@ func GetInvestmentsFilter(opts FilterOpts) ([]Investment, error) {
 }
 
 /* Returns records from within a date range */
-func GetRecordsRecent(page int) ([]Record, error) {
+func GetRecordsRecent(page int8) []Record {
 	rows, err := getRecRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	defer rows.Close()
 
@@ -233,7 +233,7 @@ func GetRecordsRecent(page int) ([]Record, error) {
 }
 
 /* Returns records matching a specified filter */
-func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
+func GetRecordsFilter(opts FilterOpts) []Record {
 	cmd := `SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
           FROM record
           WHERE rec_amt BETWEEN ? AND ?
@@ -250,7 +250,7 @@ func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
 
 	rows, err := db.Query(cmd, args...)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	defer rows.Close()
 
@@ -258,10 +258,10 @@ func GetRecordsFilter(opts FilterOpts) ([]Record, error) {
 }
 
 /* Returns a slice containing all of the categories */
-func GetCategories() ([]Category, error) {
+func GetCategories() []Category {
 	rows, err := getCategoriesStmt.Query()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	defer rows.Close()
 
