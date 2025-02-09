@@ -20,14 +20,15 @@ func CreateTUI() {
 	cf := createCategoryForm()
 	setCategoryTableKeybinds(catTv, cf)
 
-	createInvestmentsTable()
-	createInvestmentForm()
+	invTv := createInvestmentsTable()
+	inf := createInvestmentForm()
+	setInvestmentTableKeybinds(invTv, inf)
 
 	recTv := createRecordsTable()
 	rf := createRecordForm()
 	setRecordTableKeybinds(recTv, rf)
 
-	createHomepage(recTv, catTv, rf)
+	createHomepage(recTv, catTv, invTv, rf)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or ctrl+C/q when on homepage
@@ -62,7 +63,7 @@ func setTheme() {
 	}
 }
 
-func createHomepage(recTv, catTv *tableView, rf recordForm) {
+func createHomepage(recTv, catTv, invTv *tableView, rf recordForm) {
 	flex = tview.NewFlex()
 
 	lv := tview.NewList().
@@ -73,7 +74,7 @@ func createHomepage(recTv, catTv *tableView, rf recordForm) {
 		AddItem("  View Year Summary     ", "", 0, nil).
 		AddItem("  Records               ", "", 0, func() { showTable(flex, recTv) }).
 		AddItem("  Categories            ", "", 0, func() { showTable(flex, catTv) }).
-		AddItem("  Investments           ", "", 0, showInvestmentsTable).
+		AddItem("  Investments           ", "", 0, func() { showTable(flex, invTv) }).
 		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
 
 	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

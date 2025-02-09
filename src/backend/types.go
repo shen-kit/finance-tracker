@@ -42,23 +42,23 @@ func (inv Investment) Spread() (int, time.Time, string, float32, float32) {
 	return inv.Id, inv.Date, inv.Code, inv.Qty, inv.Unitprice
 }
 
-func dbRowsToInvestments(rows *sql.Rows) ([]Investment, error) {
+func dbRowsToInvestments(rows *sql.Rows) []Investment {
 	var investments []Investment
 
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var inv Investment
 		if err := rows.Scan(&inv.Id, &inv.Date, &inv.Code, &inv.Qty, &inv.Unitprice); err != nil {
-			return investments, err
+			panic(err)
 		}
 		investments = append(investments, inv)
 	}
 
 	// check for errors then return
 	if err := rows.Err(); err != nil {
-		return investments, err
+		panic(err)
 	}
-	return investments, nil
+	return investments
 }
 
 func dbRowsToRecords(rows *sql.Rows) []Record {

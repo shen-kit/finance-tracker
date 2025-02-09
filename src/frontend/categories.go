@@ -53,8 +53,6 @@ func createCategoriesTable() *tableView {
 		table:   table,
 		title:   "Categories",
 		headers: strings.Split(" ID : Name : Type : Description ", ":"),
-		curPage: 0,
-		maxPage: 0,
 	}
 	updateCategoriesTable = createUpdateTableClosure(tv)
 	tv.fUpdate = updateCategoriesTable
@@ -75,6 +73,7 @@ func setCategoryTableKeybinds(tv *tableView, cf categoryForm) {
 			id := table.getCellInt(row, 0)
 			backend.DeleteCategory(id)
 			tv.fUpdate()
+			return nil
 		} else if event.Rune() == 'e' { // edit category
 			row, _ := table.GetSelection()
 			id := table.getCellInt(row, 0)

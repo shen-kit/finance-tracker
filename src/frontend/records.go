@@ -56,8 +56,6 @@ func createRecordsTable() *tableView {
 		table:   table,
 		title:   "Records",
 		headers: strings.Split(" ID : Date : Category : Description : Amount ", ":"),
-		curPage: 0,
-		maxPage: 0,
 	}
 	updateRecordsTable = createUpdateTableClosure(tv)
 	tv.fUpdate = updateRecordsTable
@@ -78,6 +76,7 @@ func setRecordTableKeybinds(tv *tableView, rf recordForm) {
 			id := table.getCellInt(row, 0)
 			backend.DeleteRecord(id)
 			tv.fUpdate()
+			return nil
 		} else if event.Rune() == 'e' { // edit record
 			row, _ := table.GetSelection()
 			id := table.getCellInt(row, 0)

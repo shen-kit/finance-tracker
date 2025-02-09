@@ -200,10 +200,10 @@ func InsertInvestment(inv Investment) {
 // Reading Rows
 
 /* Returns investments made during within a date range */
-func GetInvestmentsRecent(page int) ([]Investment, error) {
+func GetInvestmentsRecent(page int8) []Investment {
 	rows, err := getInvRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	defer rows.Close()
 
@@ -211,10 +211,10 @@ func GetInvestmentsRecent(page int) ([]Investment, error) {
 }
 
 /* Returns investments matching a specified filter */
-func GetInvestmentsFilter(opts FilterOpts) ([]Investment, error) {
+func GetInvestmentsFilter(opts FilterOpts) []Investment {
 	rows, err := getInvFilStmt.Query(opts.minCost, opts.maxCost, opts.startDate, opts.endDate, "%"+opts.code+"%")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	defer rows.Close()
 
