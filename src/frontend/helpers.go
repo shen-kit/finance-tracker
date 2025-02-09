@@ -123,11 +123,12 @@ func (t *MyTable) getCellString(row, col int) string {
 
 func formInputCapture(onCancel, onSubmit func()) func(*tcell.EventKey) *tcell.EventKey {
 	return func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
+		if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyCtrlQ || event.Key() == tcell.KeyEscape {
 			onCancel()
 			return nil
 		} else if event.Key() == tcell.KeyEnter && event.Modifiers() == tcell.ModCtrl {
 			onSubmit()
+			return nil
 		}
 		return event
 	}
