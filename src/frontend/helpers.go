@@ -80,6 +80,18 @@ func stringToInt(s string) int {
 	return int(res)
 }
 
+/*
+Was the key pressed one that should cause a 'back' navigation?
+For all views except forms
+*/
+func isBackKey(event *tcell.EventKey) bool {
+	return event.Rune() == 'q' ||
+		event.Rune() == 'h' ||
+		event.Key() == tcell.KeyCtrlC ||
+		event.Key() == tcell.KeyCtrlQ ||
+		event.Key() == tcell.KeyEscape
+}
+
 // Custom Table
 
 type MyTable struct {
@@ -111,7 +123,7 @@ func (t *MyTable) getCellString(row, col int) string {
 
 func formInputCapture(onCancel, onSubmit func()) func(*tcell.EventKey) *tcell.EventKey {
 	return func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyCtrlC {
+		if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyEscape {
 			onCancel()
 			return nil
 		} else if event.Key() == tcell.KeyEnter && event.Modifiers() == tcell.ModCtrl {

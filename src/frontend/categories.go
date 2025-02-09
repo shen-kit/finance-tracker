@@ -62,7 +62,7 @@ func createCategoriesTable() *tableView {
 func setCategoryTableKeybinds(tv *tableView, cf categoryForm) {
 	table := tv.table
 	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'q' || event.Rune() == 'h' || event.Key() == tcell.KeyCtrlC {
+		if isBackKey(event) {
 			tv.hide(flex)
 			return nil
 		} else if event.Rune() == 'a' {

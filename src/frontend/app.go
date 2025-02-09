@@ -31,9 +31,9 @@ func CreateTUI() {
 	createHomepage(recTv, catTv, invTv, rf)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// ctrl+D to exit, or ctrl+C/q when on homepage
+		// ctrl+D to exit, or any typical 'back' key when on option select page
 		if event.Key() == tcell.KeyCtrlD ||
-			(flex.GetItemCount() == 1 && (event.Key() == tcell.KeyCtrlC || event.Rune() == 'q')) {
+			(flex.GetItemCount() == 1 && isBackKey(event)) {
 			app.Stop()
 			return nil
 		} else if event.Key() == tcell.KeyCtrlC { // disable default behaviour (exit app)
