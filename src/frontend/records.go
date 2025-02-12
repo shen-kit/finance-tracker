@@ -67,16 +67,13 @@ func setRecordTableKeybinds(tv *tableView, rf recordForm) {
 	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
 			tv.hide(flex)
-			return nil
 		} else if event.Rune() == 'a' {
 			showRecordForm(table, rf, -1, "", "", "", "")
-			return nil
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := table.GetSelection()
 			id := table.getCellInt(row, 0)
 			backend.DeleteRecord(id)
 			tv.fUpdate()
-			return nil
 		} else if event.Rune() == 'e' { // edit record
 			row, _ := table.GetSelection()
 			id := table.getCellInt(row, 0)
@@ -85,15 +82,14 @@ func setRecordTableKeybinds(tv *tableView, rf recordForm) {
 			desc := table.getCellString(row, 3)
 			amt := table.getCellString(row, 4)
 			showRecordForm(table, rf, id, date, desc, amt, catName)
-			return nil
 		} else if event.Rune() == 'L' { // next page
 			changePage(tv, tv.curPage+1)
-			return nil
 		} else if event.Rune() == 'H' { // previous page
 			changePage(tv, tv.curPage-1)
-			return nil
+		} else {
+			return event
 		}
-		return event
+		return nil
 	})
 }
 

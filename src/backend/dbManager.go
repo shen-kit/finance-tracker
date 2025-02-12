@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/shen-kit/finance-tracker/helper"
 )
 
 var db *sql.DB
@@ -237,7 +238,7 @@ func GetRecordsFilter(opts FilterOpts) []Record {
 	cmd := `SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
           FROM record
           WHERE rec_amt BETWEEN ? AND ?
-            AND rec_date BETWEEN ? AND ?`
+            AND rec_date >= ? AND rec_date < ?`
 	args := []any{opts.minCost, opts.maxCost, opts.startDate, opts.endDate}
 
 	// filter by category if some are selected
@@ -255,6 +256,14 @@ func GetRecordsFilter(opts FilterOpts) []Record {
 	defer rows.Close()
 
 	return dbRowsToRecords(rows)
+}
+
+func GetRecordsMonth(date time.Time) []Record {
+	mStart, mEnd := helper.GetMonthStartAndEnd(date)
+	return GetRecordsFilter(
+		NewFilterOpts().
+			WithStartDate(mStart).
+			WithEndDate(mEnd))
 }
 
 /* Returns a slice containing all of the categories */
