@@ -9,15 +9,40 @@ import (
 	"github.com/shen-kit/finance-tracker/backend"
 )
 
-func createMonthSummary(recTv *tableView, rf recordForm) *tview.Grid {
+type monthView struct {
+	grid        *tview.Grid
+	tvTitle     *tview.TextView
+	tvIncome    *tview.TextView
+	tableView   *tableView
+	monthOffset int
+}
+
+func createMonthSummary(recTv *tableView, rf recordForm) *monthView {
 
 	table := recTv.table
+
+	tvTitle := tview.NewTextView().
+		SetTextAlign(tview.AlignCenter)
+	tvTitle.SetBorderPadding(1, 1, 3, 3)
+
+	tvIncome := tview.NewTextView()
+	tvIncome.SetBorderPadding(0, 0, 3, 3)
+
 	msGrid := tview.NewGrid().
-		SetRows(3, 3, 0).
+		SetRows(3, 2, 0).
 		SetBorders(true).
+		AddItem(tvTitle, 0, 0, 1, 1, 0, 0, false).
+		AddItem(tvIncome, 1, 0, 1, 1, 0, 0, false).
 		AddItem(table, 2, 0, 1, 1, 0, 0, true)
 
 	msGrid.SetBorder(true).SetTitle("Month Summary")
+
+	mv := &monthView{
+		grid:      msGrid,
+		tvTitle:   tvTitle,
+		tvIncome:  tvIncome,
+		tableView: recTv,
+	}
 
 	msGrid.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
@@ -37,36 +62,55 @@ func createMonthSummary(recTv *tableView, rf recordForm) *tview.Grid {
 			desc := table.getCellString(row, 3)
 			amt := table.getCellString(row, 4)
 			showRecordForm(table, rf, id, date, desc, amt, catName)
+		} else if event.Rune() == 'H' {
+			changeMonth(mv, -1)
+		} else if event.Rune() == 'L' {
+			changeMonth(mv, 1)
 		} else {
 			return event
 		}
 		return nil
 	})
 
-	return msGrid
+	return mv
 }
 
-func showMonthSummary(grid *tview.Grid, recTv *tableView) {
-	updateMonthSummary(grid, recTv)
-	flex.AddItem(grid, 0, 1, true)
-	app.SetFocus(recTv.table)
+func showMonthSummary(monthView *monthView) {
+	monthView.tableView.table.SetBorder(false)
+	updateMonthSummary(monthView)
+	flex.AddItem(monthView.grid, 0, 1, true)
+	app.SetFocus(monthView.tableView.table)
 }
 
-func updateMonthSummary(grid *tview.Grid, recTv *tableView) {
+func updateMonthSummary(monthView *monthView) {
+
+	t := time.Now().AddDate(0, monthView.monthOffset, 0)
+	recs, income, expenditure := backend.GetMonthInfo(t)
+
+	// set text views
+	monthView.tvTitle.SetText(fmt.Sprintf("%s %d", t.Month().String(), t.Year()))
+
+	incomeStr := fmt.Sprintf("$%.0f", income)
+	expenditureStr := fmt.Sprintf("$%.0f", expenditure)
+	monthView.tvIncome.SetText(fmt.Sprintf("Income:      %8s\nExpenditure: %8s", incomeStr, expenditureStr))
+
 	// update table
-	createTableHeaders(recTv)
-	recs := backend.GetRecordsMonth(time.Now())
-
+	createTableHeaders(monthView.tableView)
 	for i, rec := range recs {
 		id, date, desc, amt, catId := rec.Spread()
 		catName := backend.GetCategoryNameFromId(catId)
-		recTv.table.
+		monthView.tableView.table.
 			SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).
 				SetAlign(tview.AlignCenter)).
 			SetCell(i+1, 1, tview.NewTableCell(date.Format(" 2006-01-02 ")).
 				SetAlign(tview.AlignCenter)).
 			SetCell(i+1, 2, tview.NewTableCell(" "+catName+" ")).
-			SetCell(i+1, 3, tview.NewTableCell(" "+desc+" ")).
+			SetCell(i+1, 3, tview.NewTableCell(" "+desc+" ").SetExpansion(1)).
 			SetCell(i+1, 4, tview.NewTableCell(fmt.Sprintf(" $%.2f ", amt)))
 	}
+}
+
+func changeMonth(monthView *monthView, offset int) {
+	monthView.monthOffset += offset
+	updateMonthSummary(monthView)
 }

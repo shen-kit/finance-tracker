@@ -109,21 +109,21 @@ func SetupDb(path string) {
 			log.Println("Failed initialising getRecRecStmt: ", err)
 		}
 
-		getIncomeSumStmt, err = db.Prepare(`SELECT SUM(rec_amt)
+		getIncomeSumStmt, err = db.Prepare(`SELECT IFNULL(SUM(rec_amt), 0)
                                         FROM record
                                         WHERE cat_id IN (SELECT cat_id FROM category WHERE cat_isincome = true)
                                           AND rec_date BETWEEN ? AND ?`)
 		if err != nil {
 			log.Println("Failed initialising getRecRecStmt: ", err)
 		}
-		getExpenditureSumStmt, err = db.Prepare(`SELECT SUM(rec_amt)
+		getExpenditureSumStmt, err = db.Prepare(`SELECT IFNULL(SUM(rec_amt), 0)
                                              FROM record
                                              WHERE cat_id IN (SELECT cat_id FROM category WHERE cat_isincome = false)
                                                AND rec_date BETWEEN ? AND ?`)
 		if err != nil {
 			log.Println("Failed initialising getRecRecStmt: ", err)
 		}
-		getCategorySumStmt, err = db.Prepare(`SELECT SUM(rec_amt)
+		getCategorySumStmt, err = db.Prepare(`SELECT IFNULL(SUM(rec_amt), 0)
                                           FROM record
                                           WHERE cat_id = ? AND rec_date BETWEEN ? AND ?`)
 		if err != nil {
@@ -258,12 +258,16 @@ func GetRecordsFilter(opts FilterOpts) []Record {
 	return dbRowsToRecords(rows)
 }
 
-func GetRecordsMonth(date time.Time) []Record {
+/* Returns a list of records, the total income and total expenditure */
+func GetMonthInfo(date time.Time) ([]Record, float32, float32) {
 	mStart, mEnd := helper.GetMonthStartAndEnd(date)
-	return GetRecordsFilter(
+	recs := GetRecordsFilter(
 		NewFilterOpts().
 			WithStartDate(mStart).
 			WithEndDate(mEnd))
+	income := GetIncomeSum(mStart, mEnd)
+	expenditure := GetExpenditureSum(mStart, mEnd)
+	return recs, income, expenditure
 }
 
 /* Returns a slice containing all of the categories */
@@ -278,21 +282,21 @@ func GetCategories() []Category {
 }
 
 /* Returns the total income over a date range (inclusive) */
-func GetIncomeSum(startDate, endDate time.Time) (float32, error) {
+func GetIncomeSum(startDate, endDate time.Time) float32 {
 	var sum float32
 	if err := getIncomeSumStmt.QueryRow(startDate, endDate).Scan(&sum); err != nil {
-		return 0, err
+		panic(err)
 	}
-	return sum, nil
+	return sum
 }
 
 /* Returns the total expenditure over a date range (inclusive), flips sign (expenditure > 0) */
-func GetExpenditureSum(startDate, endDate time.Time) (float32, error) {
+func GetExpenditureSum(startDate, endDate time.Time) float32 {
 	var sum float32
 	if err := getExpenditureSumStmt.QueryRow(startDate, endDate).Scan(&sum); err != nil {
-		return 0, err
+		panic(err)
 	}
-	return -sum, nil
+	return -sum
 }
 
 /* Returns the total money in/out for a given category over a date range */
