@@ -26,7 +26,7 @@ type updatableTable struct {
 	headers  []string
 	curPage  int `default:"0"`
 	maxPage  int `default:"0"`
-	fGetData func() []backend.DataRow
+	fGetData func(int) []backend.DataRow
 }
 
 func (t updatableTable) update(rows []backend.DataRow) {
@@ -46,7 +46,7 @@ func (t updatableTable) update(rows []backend.DataRow) {
 
 func (t updatableTable) reset() {
 	t.changePage(-t.curPage)
-	t.update(t.fGetData())
+	t.update(t.fGetData(t.curPage))
 }
 
 func (t updatableTable) changePage(by int) {
@@ -54,7 +54,7 @@ func (t updatableTable) changePage(by int) {
 		return
 	}
 	t.curPage += by
-	t.update(t.fGetData())
+	t.update(t.fGetData(t.curPage))
 
 	title := t.title
 	if t.maxPage > 0 {

@@ -24,7 +24,7 @@ func createCategoriesView() *updatableTable {
 	return &table
 }
 
-func (t *updatableTable) setKeybinds(cf categoryForm) {
+func setCatTableKeybinds(t *updatableTable, cf categoryForm) {
 	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
 			gotoHomepage()
@@ -34,7 +34,7 @@ func (t *updatableTable) setKeybinds(cf categoryForm) {
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
 			backend.DeleteCategory(id)
-			t.update(t.fGetData())
+			t.update(t.fGetData(t.curPage))
 			// set focus if deleted last row
 			if row > t.GetRowCount()-1 {
 				t.Select(max(0, row-1), 0)
@@ -90,7 +90,7 @@ func createCategoryForm() categoryForm {
 	}
 }
 
-func showCategoryForm(cv *updatableTable, cf categoryForm, id int, name, desc string, isIncome bool) {
+func showCategoryForm(ct *updatableTable, cf categoryForm, id int, name, desc string, isIncome bool) {
 
 	/* ===== Helper Functions ===== */
 
@@ -103,7 +103,7 @@ func showCategoryForm(cv *updatableTable, cf categoryForm, id int, name, desc st
 
 	closeForm := func() {
 		flex.RemoveItem(cf.form)
-		app.SetFocus(cv)
+		app.SetFocus(ct)
 	}
 
 	onSubmit := func() {
@@ -118,7 +118,7 @@ func showCategoryForm(cv *updatableTable, cf categoryForm, id int, name, desc st
 		} else {
 			backend.UpdateCategory(id, cat)
 		}
-		cv.update(cv.fGetData())
+		ct.update(ct.fGetData(ct.curPage))
 		closeForm()
 	}
 

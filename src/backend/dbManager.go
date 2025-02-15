@@ -47,7 +47,7 @@ func SetupDb(path string) {
       rec_id   INTEGER     NOT NULL  PRIMARY KEY,
       rec_date DATE        NOT NULL,
       rec_desc VARCHAR(50) NOT NULL,
-      rec_amt  NUMBER(7,2) NOT NULL,
+      rec_amt  NUMBER(9)   NOT NULL,
       cat_id   INTEGER     NOT NULL DEFAULT 0,
       CONSTRAINT category_record_fk FOREIGN KEY (cat_id) REFERENCES category (cat_id) ON UPDATE CASCADE ON DELETE SET NULL
     );
@@ -56,7 +56,7 @@ func SetupDb(path string) {
       inv_date      DATE        NOT NULL,
       inv_code      VARCHAR(10) NOT NULL,
       inv_qty       NUMBER(7,2) NOT NULL,
-      inv_unitprice NUMBER(8,2) NOT NULL
+      inv_unitprice NUMBER(8)   NOT NULL
     );
     `
 		if _, err = db.Exec(sql); err != nil {
@@ -270,7 +270,7 @@ func GetMonthInfo(date time.Time) ([]DataRow, float32, float32) {
 }
 
 /* Returns a slice containing all of the categories */
-func GetCategories() []DataRow {
+func GetCategories(page int) []DataRow {
 	rows, err := getCategoriesStmt.Query()
 	if err != nil {
 		panic(err)

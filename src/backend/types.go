@@ -14,9 +14,9 @@ type DataRow interface {
 type Record struct {
 	Id    int
 	Date  time.Time
+	CatId int
 	Desc  string
 	Amt   int
-	CatId int
 }
 
 func (rec Record) Spread() (int, time.Time, string, int, int) {
@@ -25,7 +25,13 @@ func (rec Record) Spread() (int, time.Time, string, int, int) {
 
 func (rec Record) SpreadToStrings() []string {
 	id, date, desc, amt, catId := rec.Spread()
-	return []string{fmt.Sprint(id), date.Format("2006-01-02"), desc, fmt.Sprint(amt / 100), fmt.Sprint(catId)}
+	return []string{
+		fmt.Sprint(id),
+		date.Format("2006-01-02"),
+		GetCategoryNameFromId(catId),
+		desc,
+		fmt.Sprintf("$%.2f", float32(amt)/100),
+	}
 }
 
 type Category struct {
@@ -51,16 +57,23 @@ type Investment struct {
 	Id        int
 	Date      time.Time
 	Code      string
-	Qty       float32
 	Unitprice int
+	Qty       float32
 }
 
-func (inv Investment) Spread() (int, time.Time, string, float32, int) {
-	return inv.Id, inv.Date, inv.Code, inv.Qty, inv.Unitprice
+func (inv Investment) Spread() (int, time.Time, string, int, float32) {
+	return inv.Id, inv.Date, inv.Code, inv.Unitprice, inv.Qty
 }
 
 func (inv Investment) SpreadToStrings() []string {
-	return []string{fmt.Sprint(inv.Id), inv.Date.Format("2006-01-02"), inv.Code, fmt.Sprintf("%.1f", inv.Qty), fmt.Sprintf("%.2f", inv.Unitprice/100)}
+	return []string{
+		fmt.Sprint(inv.Id),
+		inv.Date.Format("2006-01-02"),
+		inv.Code,
+		fmt.Sprintf("$%.2f", float32(inv.Unitprice)/100),
+		fmt.Sprintf("%.1f", inv.Qty),
+		fmt.Sprintf("$%.2f", float32(inv.Unitprice)/100*inv.Qty),
+	}
 }
 
 func dbRowsToInvestments(rows *sql.Rows) []DataRow {
@@ -69,7 +82,7 @@ func dbRowsToInvestments(rows *sql.Rows) []DataRow {
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
 		var inv Investment
-		if err := rows.Scan(&inv.Id, &inv.Date, &inv.Code, &inv.Qty, &inv.Unitprice); err != nil {
+		if err := rows.Scan(&inv.Id, &inv.Date, &inv.Code, &inv.Unitprice, &inv.Qty); err != nil {
 			panic(err)
 		}
 		investments = append(investments, inv)

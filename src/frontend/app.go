@@ -22,16 +22,15 @@ func CreateTUI() {
 
 	// monthView := createMonthSummary(&recView.myTable, rf)
 
-	catView := createCategoriesView()
+	catTable := createCategoriesView()
 	cf := createCategoryForm()
-	catView.setKeybinds(cf)
+	setCatTableKeybinds(catTable, cf)
 
-	// invView := createInvestmentsTable()
-	// inf := createInvestmentForm()
-	// invView.setKeybinds(inf)
+	invTable := createInvestmentsTable()
+	invForm := createInvestmentForm()
+	setInvTableKeybinds(invTable, invForm)
 
-	// createHomepage(recView, catView, invView, rf, monthView)
-	createHomepage(catView)
+	createHomepage(catTable, invTable)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or any typical 'back' key when on option select page
@@ -66,7 +65,7 @@ func setTheme() {
 	}
 }
 
-func createHomepage(catView *updatableTable) { // *recordsView, catView *categoriesView, invView *investmentsView, rf recordForm, monthView *monthView) {
+func createHomepage(catTable, invTable *updatableTable) { // *recordsView, catView *categoriesView, invView *investmentsView, rf recordForm, monthView *monthView) {
 	flex = tview.NewFlex()
 
 	lv := tview.NewList().
@@ -76,8 +75,8 @@ func createHomepage(catView *updatableTable) { // *recordsView, catView *categor
 		// AddItem("  View Month Summary    ", "", 0, func() { monthView.show(flex) }).
 		// AddItem("  View Year Summary     ", "", 0, nil).
 		// AddItem("  Records               ", "", 0, func() { recView.show() }).
-		AddItem("  Categories            ", "", 0, func() { showUpdatablePrim(catView) }).
-		// AddItem("  Investments           ", "", 0, func() { invView.show() }).
+		AddItem("  Categories            ", "", 0, func() { showUpdatablePrim(catTable) }).
+		AddItem("  Investments           ", "", 0, func() { showUpdatablePrim(invTable) }).
 		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
 
 	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
