@@ -52,15 +52,19 @@ type Investment struct {
 	Date      time.Time
 	Code      string
 	Qty       float32
-	Unitprice float32
+	Unitprice int
 }
 
-func (inv Investment) Spread() (int, time.Time, string, float32, float32) {
+func (inv Investment) Spread() (int, time.Time, string, float32, int) {
 	return inv.Id, inv.Date, inv.Code, inv.Qty, inv.Unitprice
 }
 
-func dbRowsToInvestments(rows *sql.Rows) []Investment {
-	var investments []Investment
+func (inv Investment) SpreadToStrings() []string {
+	return []string{fmt.Sprint(inv.Id), inv.Date.Format("2006-01-02"), inv.Code, fmt.Sprintf("%.1f", inv.Qty), fmt.Sprintf("%.2f", inv.Unitprice/100)}
+}
+
+func dbRowsToInvestments(rows *sql.Rows) []DataRow {
+	var investments []DataRow
 
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
@@ -78,8 +82,8 @@ func dbRowsToInvestments(rows *sql.Rows) []Investment {
 	return investments
 }
 
-func dbRowsToRecords(rows *sql.Rows) []Record {
-	var records []Record
+func dbRowsToRecords(rows *sql.Rows) []DataRow {
+	var records []DataRow
 
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {

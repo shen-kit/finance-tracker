@@ -200,7 +200,7 @@ func InsertInvestment(inv Investment) {
 // Reading Rows
 
 /* Returns investments made during within a date range */
-func GetInvestmentsRecent(page int) []Investment {
+func GetInvestmentsRecent(page int) []DataRow {
 	rows, err := getInvRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
 		panic(err)
@@ -211,7 +211,7 @@ func GetInvestmentsRecent(page int) []Investment {
 }
 
 /* Returns investments matching a specified filter */
-func GetInvestmentsFilter(opts FilterOpts) []Investment {
+func GetInvestmentsFilter(opts FilterOpts) []DataRow {
 	rows, err := getInvFilStmt.Query(opts.minCost, opts.maxCost, opts.startDate, opts.endDate, "%"+opts.code+"%")
 	if err != nil {
 		panic(err)
@@ -222,7 +222,7 @@ func GetInvestmentsFilter(opts FilterOpts) []Investment {
 }
 
 /* Returns records from within a date range */
-func GetRecordsRecent(page int) []Record {
+func GetRecordsRecent(page int) []DataRow {
 	rows, err := getRecRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
 		panic(err)
@@ -233,7 +233,7 @@ func GetRecordsRecent(page int) []Record {
 }
 
 /* Returns records matching a specified filter */
-func GetRecordsFilter(opts FilterOpts) []Record {
+func GetRecordsFilter(opts FilterOpts) []DataRow {
 	cmd := `SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
           FROM record
           WHERE rec_amt BETWEEN ? AND ?
@@ -258,7 +258,7 @@ func GetRecordsFilter(opts FilterOpts) []Record {
 }
 
 /* Returns a list of records, the total income and total expenditure */
-func GetMonthInfo(date time.Time) ([]Record, float32, float32) {
+func GetMonthInfo(date time.Time) ([]DataRow, float32, float32) {
 	mStart, mEnd := getMonthStartAndEnd(date)
 	recs := GetRecordsFilter(
 		NewFilterOpts().
