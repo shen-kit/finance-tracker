@@ -2,16 +2,12 @@ package frontend
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/shen-kit/finance-tracker/backend"
 )
-
-// global function to update the categories table using the tableView object
-var updateCategoriesTable func()
 
 type categoryForm struct {
 	form      *tview.Form
@@ -21,69 +17,39 @@ type categoryForm struct {
 	tvMsg     *tview.TextView
 }
 
-func createCategoriesTable() *tableView {
-
-	/* ===== Helper Functions ===== */
-
-	// returns a closure with the tableView saved
-	createUpdateTableClosure := func(tv *tableView) func() {
-		return func() {
-			createTableHeaders(tv)
-			cats := backend.GetCategories()
-
-			for i, cat := range cats {
-				id, name, isincome, desc := cat.Spread()
-				tv.table.
-					SetCell(i+1, 0, tview.NewTableCell(fmt.Sprintf(" %d ", id)).SetAlign(tview.AlignCenter)).
-					SetCell(i+1, 1, tview.NewTableCell(" "+name+" ")).
-					SetCell(i+1, 2, tview.NewTableCell(func() string {
-						if isincome {
-							return " Income "
-						}
-						return " Expenditure "
-					}())).
-					SetCell(i+1, 3, tview.NewTableCell(" "+desc+" "))
-			}
-		}
-	}
-
-	/* ===== Function Body ===== */
-	table := createMyTable()
-	tv := &tableView{
-		table:   table,
-		title:   "Categories",
-		headers: strings.Split(" ID : Name : Type : Description ", ":"),
-	}
-	updateCategoriesTable = createUpdateTableClosure(tv)
-	tv.fUpdate = updateCategoriesTable
-	return tv
+func createCategoriesView() *updatableTable {
+	table := newUpdatableTable(strings.Split("ID:Name:Type:Description", ":"))
+	table.title = "Categories"
+	table.fGetData = backend.GetCategories
+	return &table
 }
 
-func setCategoryTableKeybinds(tv *tableView, cf categoryForm) {
-	table := tv.table
-	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+func (t *updatableTable) setKeybinds(cf categoryForm) {
+	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
-			tv.hide(flex)
-			return nil
+			gotoHomepage()
 		} else if event.Rune() == 'a' {
-			showCategoryForm(table, cf, -1, "", "", false)
-			return nil
+			showCategoryForm(t, cf, -1, "", "", false)
 		} else if event.Rune() == 'd' { // delete category
-			row, _ := table.GetSelection()
-			id := table.getCellInt(row, 0)
+			row, _ := t.GetSelection()
+			id := t.getCellInt(row, 0)
 			backend.DeleteCategory(id)
-			tv.fUpdate()
-			return nil
+			t.update(t.fGetData())
+			// set focus if deleted last row
+			if row > t.GetRowCount()-1 {
+				t.Select(max(0, row-1), 0)
+			}
 		} else if event.Rune() == 'e' { // edit category
-			row, _ := table.GetSelection()
-			id := table.getCellInt(row, 0)
-			name := table.getCellString(row, 1)
-			isIncome := strings.EqualFold("income", table.getCellString(row, 2))
-			desc := table.getCellString(row, 3)
-			showCategoryForm(table, cf, id, name, desc, isIncome)
-			return nil
+			row, _ := t.GetSelection()
+			id := t.getCellInt(row, 0)
+			name := t.getCellString(row, 1)
+			isIncome := strings.EqualFold("income", t.getCellString(row, 2))
+			desc := t.getCellString(row, 3)
+			showCategoryForm(t, cf, id, name, desc, isIncome)
+		} else {
+			return event
 		}
-		return event
+		return nil
 	})
 }
 
@@ -124,7 +90,7 @@ func createCategoryForm() categoryForm {
 	}
 }
 
-func showCategoryForm(lastWidget tview.Primitive, cf categoryForm, id int, name, desc string, isIncome bool) {
+func showCategoryForm(cv *updatableTable, cf categoryForm, id int, name, desc string, isIncome bool) {
 
 	/* ===== Helper Functions ===== */
 
@@ -137,7 +103,7 @@ func showCategoryForm(lastWidget tview.Primitive, cf categoryForm, id int, name,
 
 	closeForm := func() {
 		flex.RemoveItem(cf.form)
-		app.SetFocus(lastWidget)
+		app.SetFocus(cv)
 	}
 
 	onSubmit := func() {
@@ -152,7 +118,7 @@ func showCategoryForm(lastWidget tview.Primitive, cf categoryForm, id int, name,
 		} else {
 			backend.UpdateCategory(id, cat)
 		}
-		updateCategoriesTable()
+		cv.update(cv.fGetData())
 		closeForm()
 	}
 

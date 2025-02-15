@@ -9,7 +9,6 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/shen-kit/finance-tracker/helper"
 )
 
 var db *sql.DB
@@ -49,7 +48,7 @@ func SetupDb(path string) {
       rec_date DATE        NOT NULL,
       rec_desc VARCHAR(50) NOT NULL,
       rec_amt  NUMBER(7,2) NOT NULL,
-      cat_id   INTEGER     NOT NULL,
+      cat_id   INTEGER     NOT NULL DEFAULT 0,
       CONSTRAINT category_record_fk FOREIGN KEY (cat_id) REFERENCES category (cat_id) ON UPDATE CASCADE ON DELETE SET NULL
     );
     CREATE TABLE IF NOT EXISTS investment (
@@ -201,7 +200,7 @@ func InsertInvestment(inv Investment) {
 // Reading Rows
 
 /* Returns investments made during within a date range */
-func GetInvestmentsRecent(page int8) []Investment {
+func GetInvestmentsRecent(page int) []Investment {
 	rows, err := getInvRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
 		panic(err)
@@ -223,7 +222,7 @@ func GetInvestmentsFilter(opts FilterOpts) []Investment {
 }
 
 /* Returns records from within a date range */
-func GetRecordsRecent(page int8) []Record {
+func GetRecordsRecent(page int) []Record {
 	rows, err := getRecRecStmt.Query(page*PAGE_ROWS, PAGE_ROWS)
 	if err != nil {
 		panic(err)
@@ -260,7 +259,7 @@ func GetRecordsFilter(opts FilterOpts) []Record {
 
 /* Returns a list of records, the total income and total expenditure */
 func GetMonthInfo(date time.Time) ([]Record, float32, float32) {
-	mStart, mEnd := helper.GetMonthStartAndEnd(date)
+	mStart, mEnd := getMonthStartAndEnd(date)
 	recs := GetRecordsFilter(
 		NewFilterOpts().
 			WithStartDate(mStart).
@@ -271,7 +270,7 @@ func GetMonthInfo(date time.Time) ([]Record, float32, float32) {
 }
 
 /* Returns a slice containing all of the categories */
-func GetCategories() []Category {
+func GetCategories() []DataRow {
 	rows, err := getCategoriesStmt.Query()
 	if err != nil {
 		panic(err)
@@ -310,16 +309,16 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 
 // Frontend Helper Functions
 
-func GetInvestmentsPages() int8 {
+func GetInvestmentsPages() int {
 	var res float64
 	db.QueryRow("SELECT COUNT(*) / ? FROM investment", float32(PAGE_ROWS)).Scan(&res)
-	return int8(math.Ceil(res))
+	return int(math.Ceil(res))
 }
 
-func GetRecordsPages() int8 {
+func GetRecordsPages() int {
 	var res float64
 	db.QueryRow("SELECT COUNT(*) / ? FROM record", float32(PAGE_ROWS)).Scan(&res)
-	return int8(math.Ceil(res))
+	return int(math.Ceil(res))
 }
 
 func GetCategoryNameFromId(catId int) string {

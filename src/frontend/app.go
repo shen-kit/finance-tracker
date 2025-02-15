@@ -16,21 +16,22 @@ func CreateTUI() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
-	recTv := createRecordsTable()
-	rf := createRecordForm()
-	setRecordTableKeybinds(recTv, rf)
+	// recView := createRecordsTable()
+	// rf := createRecordForm()
+	// recView.setKeybinds(rf)
 
-	monthView := createMonthSummary(recTv, rf)
+	// monthView := createMonthSummary(&recView.myTable, rf)
 
-	catTv := createCategoriesTable()
+	catView := createCategoriesView()
 	cf := createCategoryForm()
-	setCategoryTableKeybinds(catTv, cf)
+	catView.setKeybinds(cf)
 
-	invTv := createInvestmentsTable()
-	inf := createInvestmentForm()
-	setInvestmentTableKeybinds(invTv, inf)
+	// invView := createInvestmentsTable()
+	// inf := createInvestmentForm()
+	// invView.setKeybinds(inf)
 
-	createHomepage(recTv, catTv, invTv, rf, monthView)
+	// createHomepage(recView, catView, invView, rf, monthView)
+	createHomepage(catView)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or any typical 'back' key when on option select page
@@ -65,18 +66,18 @@ func setTheme() {
 	}
 }
 
-func createHomepage(recTv, catTv, invTv *tableView, rf recordForm, monthView *monthView) {
+func createHomepage(catView *updatableTable) { // *recordsView, catView *categoriesView, invView *investmentsView, rf recordForm, monthView *monthView) {
 	flex = tview.NewFlex()
 
 	lv := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
-		AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
-		AddItem("  View Month Summary    ", "", 0, func() { showMonthSummary(monthView) }).
-		AddItem("  View Year Summary     ", "", 0, nil).
-		AddItem("  Records               ", "", 0, func() { showTable(flex, recTv) }).
-		AddItem("  Categories            ", "", 0, func() { showTable(flex, catTv) }).
-		AddItem("  Investments           ", "", 0, func() { showTable(flex, invTv) }).
+		// AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
+		// AddItem("  View Month Summary    ", "", 0, func() { monthView.show(flex) }).
+		// AddItem("  View Year Summary     ", "", 0, nil).
+		// AddItem("  Records               ", "", 0, func() { recView.show() }).
+		AddItem("  Categories            ", "", 0, func() { showUpdatablePrim(catView) }).
+		// AddItem("  Investments           ", "", 0, func() { invView.show() }).
 		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
 
 	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

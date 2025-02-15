@@ -1,4 +1,4 @@
-package helper
+package backend
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 /*
 Creates a Time object from a given year, month, and day.
 */
-func MakeDate(year, month, day int) (time.Time, error) {
+func makeDate(year, month, day int) (time.Time, error) {
 	return time.Parse("2006-01-02", fmt.Sprintf("%04d-%02d-%02d", year, month, day))
 }
 
-func GetMonthStartAndEnd(t time.Time) (time.Time, time.Time) {
+func getMonthStartAndEnd(t time.Time) (time.Time, time.Time) {
 	year, month, _ := t.Date()
 	loc := t.Location()
 

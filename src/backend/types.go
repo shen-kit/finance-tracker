@@ -2,21 +2,30 @@ package backend
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
-
-	"github.com/shen-kit/finance-tracker/helper"
 )
+
+type DataRow interface {
+	// spread to a slice of strings, used to display as a table row
+	SpreadToStrings() []string
+}
 
 type Record struct {
 	Id    int
 	Date  time.Time
 	Desc  string
-	Amt   float32
+	Amt   int
 	CatId int
 }
 
-func (rec Record) Spread() (int, time.Time, string, float32, int) {
+func (rec Record) Spread() (int, time.Time, string, int, int) {
 	return rec.Id, rec.Date, rec.Desc, rec.Amt, rec.CatId
+}
+
+func (rec Record) SpreadToStrings() []string {
+	id, date, desc, amt, catId := rec.Spread()
+	return []string{fmt.Sprint(id), date.Format("2006-01-02"), desc, fmt.Sprint(amt / 100), fmt.Sprint(catId)}
 }
 
 type Category struct {
@@ -28,6 +37,14 @@ type Category struct {
 
 func (cat Category) Spread() (int, string, bool, string) {
 	return cat.Id, cat.Name, cat.IsIncome, cat.Desc
+}
+
+func (c Category) SpreadToStrings() []string {
+	if c.IsIncome {
+		return []string{fmt.Sprint(c.Id), c.Name, "Income", c.Desc}
+	} else {
+		return []string{fmt.Sprint(c.Id), c.Name, "Expenditure", c.Desc}
+	}
 }
 
 type Investment struct {
@@ -80,8 +97,8 @@ func dbRowsToRecords(rows *sql.Rows) []Record {
 	return records
 }
 
-func dbRowsToCategories(rows *sql.Rows) []Category {
-	var categories []Category
+func dbRowsToCategories(rows *sql.Rows) []DataRow {
+	var categories []DataRow
 
 	// for each row, assign column data to struct fields and append struct to slice
 	for rows.Next() {
@@ -112,8 +129,8 @@ func NewFilterOpts() FilterOpts {
 	/*
 	  Set default options for filters, allow functions to be passed to modify these
 	*/
-	startDate, _ := helper.MakeDate(2000, 1, 1)
-	endDate, _ := helper.MakeDate(3000, 1, 1)
+	startDate, _ := makeDate(2000, 1, 1)
+	endDate, _ := makeDate(3000, 1, 1)
 
 	opts := &FilterOpts{
 		minCost:   -10000000,
