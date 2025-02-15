@@ -29,9 +29,11 @@ func createInvestmentsTable() *updatableTable {
 
 func setInvTableKeybinds(t *updatableTable, inf investmentForm) {
 	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if isBackKey(event) {
-			gotoHomepage()
-		} else if event.Rune() == 'a' {
+		if res := t.defaultInputCapture(event); res == nil {
+			return nil
+		}
+
+		if event.Rune() == 'a' {
 			showInvestmentForm(t, inf, -1, "", "", "", "")
 		} else if event.Rune() == 'd' { // delete investment
 			row, _ := t.GetSelection()
@@ -46,10 +48,6 @@ func setInvTableKeybinds(t *updatableTable, inf investmentForm) {
 			unitprice := t.getCellString(row, 3)
 			qty := t.getCellString(row, 4)
 			showInvestmentForm(t, inf, id, date, code, qty, unitprice)
-		} else if event.Rune() == 'L' { // next page
-			t.changePage(1)
-		} else if event.Rune() == 'H' { // previous page
-			t.changePage(-1)
 		} else {
 			return event
 		}

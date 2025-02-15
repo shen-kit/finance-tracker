@@ -26,9 +26,11 @@ func createCategoriesView() *updatableTable {
 
 func setCatTableKeybinds(t *updatableTable, cf categoryForm) {
 	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if isBackKey(event) {
-			gotoHomepage()
-		} else if event.Rune() == 'a' {
+		if res := t.defaultInputCapture(event); res == nil {
+			return nil
+		}
+
+		if event.Rune() == 'a' {
 			showCategoryForm(t, cf, -1, "", "", false)
 		} else if event.Rune() == 'd' { // delete category
 			row, _ := t.GetSelection()

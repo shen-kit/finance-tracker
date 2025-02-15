@@ -29,16 +29,21 @@ func createRecordsTable() *updatableTable {
 
 func setRecTableKeybinds(t *updatableTable, rf recordForm) {
 	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if isBackKey(event) {
-			flex.RemoveItem(t)
-			app.SetFocus(flex)
-		} else if event.Rune() == 'a' {
+		if res := t.defaultInputCapture(event); res == nil {
+			return nil
+		}
+
+		if event.Rune() == 'a' {
 			showRecordForm(t, rf, -1, "", "", "", "")
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
 			backend.DeleteRecord(id)
 			t.update(t.fGetData(t.curPage))
+			// set focus if deleted last row
+			if row > t.GetRowCount()-1 {
+				t.Select(max(0, row-1), 0)
+			}
 		} else if event.Rune() == 'e' { // edit record
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
@@ -47,10 +52,6 @@ func setRecTableKeybinds(t *updatableTable, rf recordForm) {
 			desc := t.getCellString(row, 3)
 			amt := t.getCellString(row, 4)
 			showRecordForm(t, rf, id, date, desc, amt, catName)
-		} else if event.Rune() == 'L' { // next page
-			t.changePage(1)
-		} else if event.Rune() == 'H' { // previous page
-			t.changePage(-1)
 		} else {
 			return event
 		}

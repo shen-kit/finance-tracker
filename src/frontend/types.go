@@ -29,6 +29,20 @@ type updatableTable struct {
 	fGetData func(int) []backend.DataRow
 }
 
+/* handles keys common to all tables (back, prev/next page) */
+func (t updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.EventKey {
+	if isBackKey(event) {
+		gotoHomepage()
+	} else if event.Rune() == 'L' { // next page
+		t.changePage(1)
+	} else if event.Rune() == 'H' { // previous page
+		t.changePage(-1)
+	} else {
+		return event
+	}
+	return nil
+}
+
 func (t updatableTable) update(rows []backend.DataRow) {
 	t.createHeaders()
 
