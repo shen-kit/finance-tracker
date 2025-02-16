@@ -20,7 +20,7 @@ type categoryForm struct {
 func createCategoriesView() *updatableTable {
 	table := newUpdatableTable(strings.Split("ID:Name:Type:Description", ":"))
 	table.title = "Categories"
-	table.fGetData = backend.GetCategories
+	// table.fGetData = backend.GetCategories
 	return &table
 }
 

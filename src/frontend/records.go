@@ -23,7 +23,6 @@ type recordForm struct {
 func createRecordsTable() *updatableTable {
 	table := newUpdatableTable(strings.Split("ID:Date:Category:Description:Amount", ":"))
 	table.title = "Records"
-	table.fGetData = backend.GetRecordsRecent
 	return &table
 }
 
@@ -114,7 +113,7 @@ func createRecordForm() recordForm {
 	}
 }
 
-func showRecordForm(t *updatableTable, rf recordForm, id int, date, desc, amt, catName string) {
+func showRecordForm(t updatablePrim, rf recordForm, id int, date, desc, amt, catName string) {
 
 	/* ===== Helper Functions ===== */
 	catOpt := 0
@@ -159,7 +158,7 @@ func showRecordForm(t *updatableTable, rf recordForm, id int, date, desc, amt, c
 			backend.UpdateRecord(id, rec)
 		}
 
-		t.update(t.fGetData(t.curPage))
+		t.update(t.fGetData(t.getCurPage()))
 		closeForm()
 	}
 

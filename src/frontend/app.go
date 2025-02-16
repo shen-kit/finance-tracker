@@ -20,7 +20,8 @@ func CreateTUI() {
 	rf := createRecordForm()
 	setRecTableKeybinds(recTable, rf)
 
-	// monthView := createMonthSummary(&recView.myTable, rf)
+	monthView := createMonthSummary(recTable)
+	setMonthGridKeybinds(monthView, rf)
 
 	catTable := createCategoriesView()
 	cf := createCategoryForm()
@@ -30,7 +31,7 @@ func CreateTUI() {
 	invForm := createInvestmentForm()
 	setInvTableKeybinds(invTable, invForm)
 
-	createHomepage(recTable, catTable, invTable)
+	createHomepage(recTable, catTable, invTable, monthView)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or any typical 'back' key when on option select page
@@ -65,14 +66,14 @@ func setTheme() {
 	}
 }
 
-func createHomepage(recTable, catTable, invTable *updatableTable) { // *recordsView, catView *categoriesView, invView *investmentsView, rf recordForm, monthView *monthView) {
+func createHomepage(recTable, catTable, invTable *updatableTable, monthView *monthGridView) {
 	flex = tview.NewFlex()
 
 	lv := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
 		// AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
-		// AddItem("  View Month Summary    ", "", 0, func() { monthView.show(flex) }).
+		AddItem("  View Month Summary    ", "", 0, func() { showUpdatablePrim(monthView) }).
 		// AddItem("  View Year Summary     ", "", 0, nil).
 		AddItem("  Records               ", "", 0, func() { showUpdatablePrim(recTable) }).
 		AddItem("  Categories            ", "", 0, func() { showUpdatablePrim(catTable) }).

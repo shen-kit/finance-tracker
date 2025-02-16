@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -11,6 +12,8 @@ import (
 )
 
 type updatable interface {
+	fGetData(int) []backend.DataRow
+	getCurPage() int
 	update([]backend.DataRow)
 	reset()
 }
@@ -21,16 +24,31 @@ type updatablePrim interface {
 }
 
 type updatableTable struct {
-	tview.Table
-	title    string
-	headers  []string
-	curPage  int `default:"0"`
-	maxPage  int `default:"0"`
-	fGetData func(int) []backend.DataRow
+	*tview.Table
+	title   string
+	headers []string
+	curPage int `default:"0"`
+	maxPage int `default:"0"`
+	// fGetData func(int) []backend.DataRow
 }
 
+func (t *updatableTable) fGetData(int) []backend.DataRow {
+	switch t.title {
+	case "Records":
+		return backend.GetRecordsRecent(t.curPage)
+	case "Categories":
+		return backend.GetCategories(t.curPage)
+	case "Investments":
+		return backend.GetInvestmentsRecent(t.curPage)
+	default:
+		panic("fGetData encountered an unknown title: " + t.title)
+	}
+}
+
+func (t *updatableTable) getCurPage() int { return t.curPage }
+
 /* handles keys common to all tables (back, prev/next page) */
-func (t updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.EventKey {
+func (t *updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	if isBackKey(event) {
 		gotoHomepage()
 	} else if event.Rune() == 'L' { // next page
@@ -43,7 +61,7 @@ func (t updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.EventK
 	return nil
 }
 
-func (t updatableTable) update(rows []backend.DataRow) {
+func (t *updatableTable) update(rows []backend.DataRow) {
 	t.createHeaders()
 
 	var strTable [][]string
@@ -58,12 +76,13 @@ func (t updatableTable) update(rows []backend.DataRow) {
 	}
 }
 
-func (t updatableTable) reset() {
+func (t *updatableTable) reset() {
+	t.SetBorder(true)
 	t.changePage(-t.curPage)
 	t.update(t.fGetData(t.curPage))
 }
 
-func (t updatableTable) changePage(by int) {
+func (t *updatableTable) changePage(by int) {
 	if t.curPage+by < 0 || t.curPage+by > t.maxPage {
 		return
 	}
@@ -77,7 +96,7 @@ func (t updatableTable) changePage(by int) {
 	t.SetTitle(title)
 }
 
-func (t updatableTable) createHeaders() {
+func (t *updatableTable) createHeaders() {
 	t.Clear()
 	for i, h := range t.headers {
 		t.SetCell(
@@ -89,12 +108,12 @@ func (t updatableTable) createHeaders() {
 	}
 }
 
-func (t updatableTable) getCellInt(row, col int) int {
+func (t *updatableTable) getCellInt(row, col int) int {
 	res, _ := strconv.ParseInt(strings.TrimSpace(t.GetCell(row, col).Text), 10, 32)
 	return int(res)
 }
 
-func (t updatableTable) getCellString(row, col int) string {
+func (t *updatableTable) getCellString(row, col int) string {
 	return strings.Trim(t.GetCell(row, col).Text, " $")
 }
 
@@ -106,15 +125,30 @@ func newUpdatableTable(headers []string) updatableTable {
 		SetSelectable(true, false)
 	t.SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 	return updatableTable{
-		Table:   *t,
+		Table:   t,
 		headers: headers,
 	}
 }
 
 type monthGridView struct {
-	updatable
 	*tview.Grid
-	curOffset int `default:"0"`
+	table       *updatableTable
+	monthOffset int `default:"0"`
+	tvTitle     *tview.TextView
+	tvSummary   *tview.TextView
+}
+
+func (mv *monthGridView) fGetData(offset int) []backend.DataRow {
+	t := time.Now().AddDate(0, mv.monthOffset, 0)
+	records, _, _ := backend.GetMonthInfo(t)
+	return records
+}
+
+func (mv *monthGridView) getCurPage() int { return mv.monthOffset }
+
+func (mv *monthGridView) changeMonth(by int) {
+	mv.monthOffset += by
+	mv.update(mv.fGetData(mv.monthOffset))
 }
 
 func showUpdatablePrim(p updatablePrim) {
