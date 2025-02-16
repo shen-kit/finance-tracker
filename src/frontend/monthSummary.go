@@ -35,28 +35,29 @@ func createMonthSummary(recTable *updatableTable) *monthGridView {
 	}
 }
 
-func setMonthGridKeybinds(monthGrid *monthGridView, rf recordForm) {
-	monthGrid.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+func setMonthGridKeybinds(mv *monthGridView, rf recordForm) {
+	mv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
 			gotoHomepage()
 		} else if event.Rune() == 'a' { // add record
-			showRecordForm(monthGrid, rf, -1, "", "", "", "")
+			showRecordForm(mv, rf, -1, "", "", "", "")
 		} else if event.Rune() == 'd' { // delete record
-			row, _ := monthGrid.table.GetSelection()
-			id := monthGrid.table.getCellInt(row, 0)
+			row, _ := mv.table.GetSelection()
+			id := mv.table.getCellInt(row, 0)
 			backend.DeleteRecord(id)
+			mv.update(mv.fGetData(mv.getCurPage()))
 		} else if event.Rune() == 'e' { // edit record
-			row, _ := monthGrid.table.GetSelection()
-			id := monthGrid.table.getCellInt(row, 0)
-			date := monthGrid.table.getCellString(row, 1)
-			catName := monthGrid.table.getCellString(row, 2)
-			desc := monthGrid.table.getCellString(row, 3)
-			amt := monthGrid.table.getCellString(row, 4)
-			showRecordForm(monthGrid, rf, id, date, desc, amt, catName)
+			row, _ := mv.table.GetSelection()
+			id := mv.table.getCellInt(row, 0)
+			date := mv.table.getCellString(row, 1)
+			catName := mv.table.getCellString(row, 2)
+			desc := mv.table.getCellString(row, 3)
+			amt := mv.table.getCellString(row, 4)
+			showRecordForm(mv, rf, id, date, desc, amt, catName)
 		} else if event.Rune() == 'H' {
-			monthGrid.changeMonth(-1)
+			mv.changeMonth(-1)
 		} else if event.Rune() == 'L' {
-			monthGrid.changeMonth(1)
+			mv.changeMonth(1)
 		} else {
 			return event
 		}
