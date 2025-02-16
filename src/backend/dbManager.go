@@ -93,7 +93,8 @@ func SetupDb(path string) {
                                      FROM investment
                                      WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
                                        AND inv_date BETWEEN ? AND ?
-                                       AND inv_code LIKE ?`)
+                                       AND inv_code LIKE ?
+                                     ORDER BY inv_date`)
 		if err != nil {
 			log.Println("Failed initialising getInvFilStmt: ", err)
 		}
@@ -143,17 +144,27 @@ func SetupDb(path string) {
 }
 
 func CreateDummyData() {
-	investments := [...]Investment{
-		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
-		{Date: time.Now().AddDate(0, -1, 0), Code: "VGS.AX", Qty: 5, Unitprice: 600},
-		{Date: time.Now().AddDate(0, -1, 0), Code: "IVV", Qty: 10, Unitprice: 600},
+	startDate, _ := makeDate(2024, 11, 1)
+
+	// investments
+	for range 15 {
+		InsertInvestment(Investment{
+			Date:      startDate.AddDate(0, 0, rand.Intn(100)),
+			Code:      "IVV",
+			Qty:       float32(rand.Intn(100)),
+			Unitprice: rand.Intn(60000),
+		})
 	}
-	for range 10 {
-		for _, inv := range investments {
-			InsertInvestment(inv)
-		}
+	for range 15 {
+		InsertInvestment(Investment{
+			Date:      startDate.AddDate(0, 0, rand.Intn(100)),
+			Code:      "VGS.AX",
+			Qty:       float32(rand.Intn(500)),
+			Unitprice: rand.Intn(20000),
+		})
 	}
 
+	// categories
 	categories := [...]Category{
 		{Name: "Work", IsIncome: true, Desc: "income from work"},
 		{Name: "Allowance", IsIncome: true, Desc: "allowance from parents"},
@@ -165,19 +176,25 @@ func CreateDummyData() {
 		InsertCategory(cat)
 	}
 
-	// insert records
-	startDate, _ := makeDate(2024, 11, 1)
-	for i := range 80 {
+	// records
+	for i := range 20 { // income
 		InsertRecord(Record{
 			Date:  startDate.AddDate(0, 0, rand.Intn(100)),
-			Desc:  "test data record " + fmt.Sprint(i),
-			Amt:   rand.Intn(100000),
-			CatId: rand.Intn(5) + 1,
+			Desc:  "dummy income record " + fmt.Sprint(i),
+			Amt:   600 + rand.Intn(70000),
+			CatId: rand.Intn(2) + 1,
+		})
+	}
+	for i := range 80 { // expenditure
+		InsertRecord(Record{
+			Date:  startDate.AddDate(0, 0, rand.Intn(100)),
+			Desc:  "dummy expenditure record " + fmt.Sprint(i),
+			Amt:   -rand.Intn(20000),
+			CatId: rand.Intn(2) + 3,
 		})
 	}
 
 	fmt.Println("Inserted dummy data")
-
 }
 
 // Inserting Rows
@@ -243,7 +260,8 @@ func GetRecordsFilter(opts FilterOpts) []DataRow {
 	cmd := `SELECT rec_id, rec_date, rec_desc, rec_amt, cat_id
           FROM record
           WHERE rec_amt BETWEEN ? AND ?
-            AND rec_date >= ? AND rec_date < ?`
+            AND rec_date >= ? AND rec_date < ?
+          ORDER BY rec_date`
 	args := []any{opts.minCost, opts.maxCost, opts.startDate, opts.endDate}
 
 	// filter by category if some are selected
@@ -315,15 +333,15 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 
 // Frontend Helper Functions
 
-func GetInvestmentsPages() int {
+func GetInvestmentsMaxPage() int {
 	var res float64
-	db.QueryRow("SELECT COUNT(*) / ? FROM investment", float32(PAGE_ROWS)).Scan(&res)
+	db.QueryRow("SELECT (COUNT(*) / ?) - 1 FROM investment", float32(PAGE_ROWS)).Scan(&res)
 	return int(math.Ceil(res))
 }
 
-func GetRecordsPages() int {
+func GetRecordsMaxPage() int {
 	var res float64
-	db.QueryRow("SELECT COUNT(*) / ? FROM record", float32(PAGE_ROWS)).Scan(&res)
+	db.QueryRow("SELECT (COUNT(*) / ?) - 1 FROM record", float32(PAGE_ROWS)).Scan(&res)
 	return int(math.Ceil(res))
 }
 

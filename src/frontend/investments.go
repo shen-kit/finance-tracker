@@ -23,7 +23,7 @@ type investmentForm struct {
 func createInvestmentsTable() *updatableTable {
 	table := newUpdatableTable(strings.Split("ID:Date:Code:Unitprice:Qty:Total", ":"))
 	table.title = "Investments"
-	// table.fGetData = backend.GetInvestmentsRecent
+	table.fGetMaxPage = backend.GetInvestmentsMaxPage
 	return &table
 }
 

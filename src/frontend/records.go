@@ -23,6 +23,7 @@ type recordForm struct {
 func createRecordsTable() *updatableTable {
 	table := newUpdatableTable(strings.Split("ID:Date:Category:Description:Amount", ":"))
 	table.title = "Records"
+	table.fGetMaxPage = backend.GetRecordsMaxPage
 	return &table
 }
 

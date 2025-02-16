@@ -25,10 +25,11 @@ type updatablePrim interface {
 
 type updatableTable struct {
 	*tview.Table
-	title   string
-	headers []string
-	curPage int `default:"0"`
-	maxPage int `default:"0"`
+	title       string
+	headers     []string
+	curPage     int `default:"0"`
+	maxPage     int `default:"0"`
+	fGetMaxPage func() int
 	// fGetData func(int) []backend.DataRow
 }
 
@@ -62,8 +63,9 @@ func (t *updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.Event
 }
 
 func (t *updatableTable) update(rows []backend.DataRow) {
-	t.createHeaders()
+	t.maxPage = t.fGetMaxPage()
 
+	t.createHeaders()
 	var strTable [][]string
 	for _, row := range rows {
 		strTable = append(strTable, row.SpreadToStrings())

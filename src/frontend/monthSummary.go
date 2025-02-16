@@ -19,7 +19,7 @@ func createMonthSummary(recTable *updatableTable) *monthGridView {
 	tvSummary.SetBorderPadding(0, 0, 3, 3)
 
 	msGrid := tview.NewGrid().
-		SetRows(3, 2, 0).
+		SetRows(3, 3, 0).
 		SetBorders(true).
 		AddItem(tvTitle, 0, 0, 1, 1, 0, 0, false).
 		AddItem(tvSummary, 1, 0, 1, 1, 0, 0, false).
@@ -81,7 +81,8 @@ func (mv monthGridView) update(recs []backend.DataRow) {
 	// set summary text
 	incomeStr := fmt.Sprintf("$%.0f", income/100)
 	expenditureStr := fmt.Sprintf("$%.0f", expenditure/100)
-	mv.tvSummary.SetText(fmt.Sprintf("Income:      %8s\nExpenditure: %8s", incomeStr, expenditureStr))
+	netStr := fmt.Sprintf("$%.0f", (income-expenditure)/100)
+	mv.tvSummary.SetText(fmt.Sprintf("Income:      %8s\nExpenditure: %8s\nNet Change:  %8s", incomeStr, expenditureStr, netStr))
 
 	// update table data
 	mv.table.update(recs)
