@@ -79,8 +79,8 @@ func (mv monthGridView) update(recs []backend.DataRow) {
 	mv.tvTitle.SetText(fmt.Sprintf("%s %d", t.Month().String(), t.Year()))
 
 	// set summary text
-	incomeStr := fmt.Sprintf("$%.0f", income)
-	expenditureStr := fmt.Sprintf("$%.0f", expenditure)
+	incomeStr := fmt.Sprintf("$%.0f", income/100)
+	expenditureStr := fmt.Sprintf("$%.0f", expenditure/100)
 	mv.tvSummary.SetText(fmt.Sprintf("Income:      %8s\nExpenditure: %8s", incomeStr, expenditureStr))
 
 	// update table data

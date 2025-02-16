@@ -9,7 +9,7 @@ import (
 
 func main() {
 	backend.SetupDb("./test.db")
-	// backend.CreateDummyData()
+	backend.CreateDummyData()
 
 	frontend.CreateTUI()
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -153,23 +154,28 @@ func CreateDummyData() {
 		}
 	}
 
-	// categories := [...]Category{
-	// 	{Name: "Work", IsIncome: true, Desc: "income from work"},
-	// 	{Name: "Groceries", IsIncome: false, Desc: "grocery spending"},
-	// }
-	// for _, cat := range categories {
-	// 	InsertCategory(cat)
-	// }
-	//
-	// records := [...]Record{
-	// 	{Date: time.Now(), Desc: "new record desc 1", Amt: 100, CatId: 1},
-	// 	{Date: time.Now(), Desc: "new record desc 2", Amt: -200, CatId: 2},
-	// 	{Date: time.Now(), Desc: "new record desc 3", Amt: 300, CatId: 1},
-	// }
-	// for _, rec := range records {
-	// 	InsertRecord(rec)
-	// }
-	//
+	categories := [...]Category{
+		{Name: "Work", IsIncome: true, Desc: "income from work"},
+		{Name: "Allowance", IsIncome: true, Desc: "allowance from parents"},
+		{Name: "Groceries", IsIncome: false, Desc: "groceries"},
+		{Name: "Entertainment", IsIncome: false, Desc: "eating out, experiences, spending for fun"},
+		{Name: "Gifts", IsIncome: false, Desc: "buying presents for others"},
+	}
+	for _, cat := range categories {
+		InsertCategory(cat)
+	}
+
+	// insert records
+	startDate, _ := makeDate(2024, 11, 1)
+	for i := range 80 {
+		InsertRecord(Record{
+			Date:  startDate.AddDate(0, 0, rand.Intn(100)),
+			Desc:  "test data record " + fmt.Sprint(i),
+			Amt:   rand.Intn(100000),
+			CatId: rand.Intn(5) + 1,
+		})
+	}
+
 	fmt.Println("Inserted dummy data")
 
 }
