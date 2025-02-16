@@ -94,7 +94,7 @@ func SetupDb(path string) {
                                      WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
                                        AND inv_date BETWEEN ? AND ?
                                        AND inv_code LIKE ?
-                                     ORDER BY inv_date`)
+                                     ORDER BY inv_date DESC`)
 		if err != nil {
 			log.Println("Failed initialising getInvFilStmt: ", err)
 		}
@@ -261,7 +261,7 @@ func GetRecordsFilter(opts FilterOpts) []DataRow {
           FROM record
           WHERE rec_amt BETWEEN ? AND ?
             AND rec_date >= ? AND rec_date < ?
-          ORDER BY rec_date`
+          ORDER BY rec_date DESC`
 	args := []any{opts.minCost, opts.maxCost, opts.startDate, opts.endDate}
 
 	// filter by category if some are selected
