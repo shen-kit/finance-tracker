@@ -72,22 +72,6 @@ func CreateTUI() {
 	}
 }
 
-func setTheme() {
-	// frappe -> https://catppuccin.com/palette
-	tview.Styles = tview.Theme{
-		PrimitiveBackgroundColor:    tcell.NewRGBColor(48, 52, 70),    // Main background color for primitives.
-		ContrastBackgroundColor:     tcell.NewRGBColor(129, 200, 190), // Background color for contrasting elements.
-		MoreContrastBackgroundColor: tcell.NewRGBColor(239, 159, 118), // Background color for even more contrasting elements.
-		BorderColor:                 tcell.NewRGBColor(148, 156, 187), // Box borders.
-		TitleColor:                  tcell.NewRGBColor(198, 208, 245), // Box titles.
-		PrimaryTextColor:            tcell.NewRGBColor(198, 208, 245), // Primary text.
-		SecondaryTextColor:          tcell.NewRGBColor(181, 191, 226), // Secondary text (e.g. labels).
-		TertiaryTextColor:           tcell.NewRGBColor(165, 173, 206), // Tertiary text (e.g. subtitles, notes).
-		InverseTextColor:            tcell.NewRGBColor(48, 52, 70),    // Text on primary-colored backgrounds.
-		ContrastSecondaryTextColor:  tcell.NewRGBColor(65, 69, 89),    // Secondary text on ContrastBackgroundColor-colored backgrounds.
-	}
-}
-
 func createHomepage(recTable, catTable, invTable *updatableTable, monthView *monthGridView, yearView *yearView) {
 	flex = tview.NewFlex()
 
@@ -134,10 +118,28 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 		return event
 	})
 
-	optionsList.SetTitle("Options").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
+	optionsList.SetTitle("Options").
+		SetBorder(true).
+		SetBorderPadding(1, 1, 2, 2)
 
 	flex.AddItem(optionsList, 30, 0, true)
 	showUpdatablePrim(monthView, false)
 
 	pages.AddPage("main", flex, true, true)
+}
+
+func setTheme() {
+	// frappe -> https://catppuccin.com/palette
+	tview.Styles = tview.Theme{
+		PrimitiveBackgroundColor:    tcell.NewRGBColor(48, 52, 70),    // Main background color for primitives.
+		ContrastBackgroundColor:     tcell.NewRGBColor(129, 200, 190), // Background color for contrasting elements.
+		MoreContrastBackgroundColor: tcell.NewRGBColor(239, 159, 118), // Background color for even more contrasting elements.
+		BorderColor:                 tcell.NewRGBColor(148, 156, 187), // Box borders.
+		TitleColor:                  tcell.NewRGBColor(198, 208, 245), // Box titles.
+		PrimaryTextColor:            tcell.NewRGBColor(198, 208, 245), // Primary text.
+		SecondaryTextColor:          tcell.NewRGBColor(181, 191, 226), // Secondary text (e.g. labels).
+		TertiaryTextColor:           tcell.NewRGBColor(165, 173, 206), // Tertiary text (e.g. subtitles, notes).
+		InverseTextColor:            tcell.NewRGBColor(48, 52, 70),    // Text on primary-colored backgrounds.
+		ContrastSecondaryTextColor:  tcell.NewRGBColor(65, 69, 89),    // Secondary text on ContrastBackgroundColor-colored backgrounds.
+	}
 }
