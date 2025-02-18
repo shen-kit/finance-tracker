@@ -36,7 +36,7 @@ func createYearView() *yearView {
 func setYearViewKeybinds(yv *yearView) {
 	yv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
-			gotoHomepage()
+			app.SetFocus(flex)
 		} else if event.Rune() == 'H' {
 			yv.changeYear(-1)
 		} else if event.Rune() == 'L' {

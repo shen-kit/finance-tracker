@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	app   *tview.Application
-	pages *tview.Pages
-	flex  *tview.Flex
+	app         *tview.Application
+	pages       *tview.Pages
+	flex        *tview.Flex
+	optionsList *tview.List
 )
 
 func CreateTUI() {
@@ -44,6 +45,26 @@ func CreateTUI() {
 			return nil
 		} else if event.Key() == tcell.KeyCtrlC { // disable default behaviour (exit app)
 			return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
+		} else if event.Rune() == 'm' {
+			clearScreen()
+			optionsList.SetCurrentItem(0)
+			showUpdatablePrim(monthView)
+		} else if event.Rune() == 'y' {
+			clearScreen()
+			optionsList.SetCurrentItem(1)
+			showUpdatablePrim(yearView)
+		} else if event.Rune() == 'r' {
+			clearScreen()
+			optionsList.SetCurrentItem(2)
+			showUpdatablePrim(recTable)
+		} else if event.Rune() == 'c' {
+			clearScreen()
+			optionsList.SetCurrentItem(3)
+			showUpdatablePrim(catTable)
+		} else if event.Rune() == 'i' {
+			clearScreen()
+			optionsList.SetCurrentItem(4)
+			showUpdatablePrim(invTable)
 		}
 		return event
 	})
@@ -72,18 +93,35 @@ func setTheme() {
 func createHomepage(recTable, catTable, invTable *updatableTable, monthView *monthGridView, yearView *yearView) {
 	flex = tview.NewFlex()
 
-	lv := tview.NewList().
+	optionsList = tview.NewList().
 		ShowSecondaryText(false).
+		SetHighlightFullLine(true).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
 		// AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
-		AddItem("  View Month Summary    ", "", 0, func() { showUpdatablePrim(monthView) }).
-		AddItem("  View Year Summary     ", "", 0, func() { showUpdatablePrim(yearView) }).
-		AddItem("  Records               ", "", 0, func() { showUpdatablePrim(recTable) }).
-		AddItem("  Categories            ", "", 0, func() { showUpdatablePrim(catTable) }).
-		AddItem("  Investments           ", "", 0, func() { showUpdatablePrim(invTable) }).
-		AddItem("  Quit                  ", "", 0, func() { app.Stop() })
+		AddItem("  View Month Summary", "month", 0, func() { app.SetFocus(recTable) }).
+		AddItem("  View Year Summary", "year", 0, func() { app.SetFocus(yearView) }).
+		AddItem("  Records", "records", 0, func() { app.SetFocus(recTable) }).
+		AddItem("  Categories", "categories", 0, func() { app.SetFocus(catTable) }).
+		AddItem("  Investments", "investments", 0, func() { app.SetFocus(invTable) }).
+		AddItem("  Quit", "quit", 0, func() { app.Stop() })
 
-	lv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	optionsList.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
+		clearScreen()
+		switch secondaryText {
+		case "month":
+			showUpdatablePrim(monthView)
+		case "year":
+			showUpdatablePrim(yearView)
+		case "records":
+			showUpdatablePrim(recTable)
+		case "categories":
+			showUpdatablePrim(catTable)
+		case "investments":
+			showUpdatablePrim(invTable)
+		}
+	})
+
+	optionsList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'j' {
 			return tcell.NewEventKey(tcell.KeyDown, 'j', tcell.ModNone)
 		} else if event.Rune() == 'k' {
@@ -94,9 +132,10 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 		return event
 	})
 
-	lv.SetTitle("Options").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
+	optionsList.SetTitle("Options").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
-	flex.AddItem(lv, 30, 0, true)
+	flex.AddItem(optionsList, 30, 0, true)
+	showUpdatablePrim(monthView)
 
 	pages.AddPage("main", flex, true, true)
 }

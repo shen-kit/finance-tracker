@@ -26,7 +26,7 @@ type updatablePrim interface {
 func showUpdatablePrim(p updatablePrim) {
 	p.reset()
 	flex.AddItem(p, 0, 1, true)
-	app.SetFocus(p)
+	// app.SetFocus(p)
 }
 
 type updatableTable struct {
@@ -57,7 +57,7 @@ func (t *updatableTable) getCurPage() int { return t.curPage }
 /* handles keys common to all tables (back, prev/next page) */
 func (t *updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	if isBackKey(event) {
-		gotoHomepage()
+		app.SetFocus(flex)
 	} else if event.Rune() == 'L' { // next page
 		t.changePage(1)
 	} else if event.Rune() == 'H' { // previous page

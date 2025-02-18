@@ -38,7 +38,7 @@ func createMonthSummary(recTable *updatableTable) *monthGridView {
 func setMonthGridKeybinds(mv *monthGridView, rf recordForm) {
 	mv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if isBackKey(event) {
-			gotoHomepage()
+			app.SetFocus(flex)
 		} else if event.Rune() == 'a' { // add record
 			showRecordForm(mv, rf, -1, "", "", "", "")
 		} else if event.Rune() == 'd' { // delete record
