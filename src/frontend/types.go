@@ -23,6 +23,12 @@ type updatablePrim interface {
 	tview.Primitive
 }
 
+func showUpdatablePrim(p updatablePrim) {
+	p.reset()
+	flex.AddItem(p, 0, 1, true)
+	app.SetFocus(p)
+}
+
 type updatableTable struct {
 	*tview.Table
 	title       string
@@ -153,8 +159,21 @@ func (mv *monthGridView) changeMonth(by int) {
 	mv.update(mv.fGetData(mv.monthOffset))
 }
 
-func showUpdatablePrim(p updatablePrim) {
-	p.reset()
-	flex.AddItem(p, 0, 1, true)
-	app.SetFocus(p)
+type yearView struct {
+	*tview.Grid
+	invTable   *updatableTable
+	recTable   *updatableTable
+	yearOffset int `default:"0"`
+	tvTitle    *tview.TextView
 }
+
+func (yv *yearView) fGetData(offset int) []backend.DataRow {
+	return []backend.DataRow{}
+}
+
+func (yv *yearView) changeYear(by int) {
+	yv.yearOffset += by
+	yv.update(yv.fGetData(yv.yearOffset))
+}
+
+func (yv *yearView) getCurPage() int { return yv.yearOffset }
