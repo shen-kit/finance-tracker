@@ -23,10 +23,12 @@ type updatablePrim interface {
 	tview.Primitive
 }
 
-func showUpdatablePrim(p updatablePrim) {
+func showUpdatablePrim(p updatablePrim, focus bool) {
 	p.reset()
 	flex.AddItem(p, 0, 1, true)
-	// app.SetFocus(p)
+	if focus {
+		app.SetFocus(p)
+	}
 }
 
 type updatableTable struct {
@@ -36,7 +38,6 @@ type updatableTable struct {
 	curPage     int `default:"0"`
 	maxPage     int `default:"0"`
 	fGetMaxPage func() int
-	// fGetData func(int) []backend.DataRow
 }
 
 func (t *updatableTable) fGetData(int) []backend.DataRow {

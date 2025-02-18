@@ -40,31 +40,29 @@ func CreateTUI() {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or any typical 'back' key when on option select page
 		if event.Key() == tcell.KeyCtrlD ||
-			(flex.GetItemCount() == 1 && isBackKey(event)) {
+			(optionsList.HasFocus() && isBackKey(event)) {
 			app.Stop()
 			return nil
 		} else if event.Key() == tcell.KeyCtrlC { // disable default behaviour (exit app)
 			return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
-		} else if event.Rune() == 'm' {
-			clearScreen()
-			optionsList.SetCurrentItem(0)
-			showUpdatablePrim(monthView)
-		} else if event.Rune() == 'y' {
-			clearScreen()
-			optionsList.SetCurrentItem(1)
-			showUpdatablePrim(yearView)
-		} else if event.Rune() == 'r' {
-			clearScreen()
-			optionsList.SetCurrentItem(2)
-			showUpdatablePrim(recTable)
-		} else if event.Rune() == 'c' {
-			clearScreen()
-			optionsList.SetCurrentItem(3)
-			showUpdatablePrim(catTable)
-		} else if event.Rune() == 'i' {
-			clearScreen()
-			optionsList.SetCurrentItem(4)
-			showUpdatablePrim(invTable)
+		} else if flex.GetItemCount() < 3 {
+			switch event.Rune() {
+			case 'm':
+				optionsList.SetCurrentItem(0)
+				app.SetFocus(monthView)
+			case 'y':
+				optionsList.SetCurrentItem(1)
+				app.SetFocus(yearView)
+			case 'r':
+				optionsList.SetCurrentItem(2)
+				app.SetFocus(recTable)
+			case 'c':
+				optionsList.SetCurrentItem(3)
+				app.SetFocus(catTable)
+			case 'i':
+				optionsList.SetCurrentItem(4)
+				app.SetFocus(invTable)
+			}
 		}
 		return event
 	})
@@ -109,15 +107,15 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 		clearScreen()
 		switch secondaryText {
 		case "month":
-			showUpdatablePrim(monthView)
+			showUpdatablePrim(monthView, false)
 		case "year":
-			showUpdatablePrim(yearView)
+			showUpdatablePrim(yearView, false)
 		case "records":
-			showUpdatablePrim(recTable)
+			showUpdatablePrim(recTable, false)
 		case "categories":
-			showUpdatablePrim(catTable)
+			showUpdatablePrim(catTable, false)
 		case "investments":
-			showUpdatablePrim(invTable)
+			showUpdatablePrim(invTable, false)
 		}
 	})
 
@@ -128,6 +126,10 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 			return tcell.NewEventKey(tcell.KeyUp, 'k', tcell.ModNone)
 		} else if event.Rune() == 'l' {
 			return tcell.NewEventKey(tcell.KeyEnter, 'l', tcell.ModNone)
+		} else if event.Rune() == 'g' {
+			optionsList.SetCurrentItem(0)
+		} else if event.Rune() == 'G' {
+			optionsList.SetCurrentItem(optionsList.GetItemCount() - 1)
 		}
 		return event
 	})
@@ -135,7 +137,7 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 	optionsList.SetTitle("Options").SetBorder(true).SetBorderPadding(1, 1, 2, 2)
 
 	flex.AddItem(optionsList, 30, 0, true)
-	showUpdatablePrim(monthView)
+	showUpdatablePrim(monthView, false)
 
 	pages.AddPage("main", flex, true, true)
 }

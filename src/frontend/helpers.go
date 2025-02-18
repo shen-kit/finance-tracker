@@ -10,8 +10,8 @@ import (
 
 // UI
 
+// remove all items except the first one
 func clearScreen() {
-	// remove all items except the first one
 	for range flex.GetItemCount() - 1 {
 		flex.RemoveItem(flex.GetItem(1))
 	}
