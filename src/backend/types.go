@@ -140,7 +140,7 @@ type CategoryYear struct {
 
 func (cy CategoryYear) SpreadToStrings() []string {
 	var res = make([]string, 13, 13)
-	res[0] = fmt.Sprint(cy.CatId)
+	res[0] = GetCategoryNameFromId(cy.CatId)
 	for i, val := range cy.MonthSums {
 		res[i+1] = fmt.Sprintf("$%.0f", float32(val)/100)
 	}
