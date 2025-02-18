@@ -331,6 +331,34 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 	return sum, nil
 }
 
+/* Returns rows of [catName, [sum(Month)]] */
+func GetYearSummary(year int) []DataRow {
+	sql := `SELECT cat_id, SUBSTR(rec_date, 6, 2), SUM(rec_amt)
+          FROM record
+          WHERE SUBSTR(rec_date, 1, 4) = ?
+          GROUP BY cat_id, SUBSTR(rec_date, 6, 2)
+          ORDER BY cat_id, SUBSTR(rec_date, 6, 2) ASC;`
+	rows, err := db.Query(sql, fmt.Sprint(year))
+	if err != nil {
+		panic(err)
+	}
+
+	var res = []DataRow{}
+	var c *CategoryYear
+	for rows.Next() {
+		var cid, month, amt int
+		if err := rows.Scan(&cid, &month, &amt); err != nil {
+			panic(err)
+		}
+		if c == nil || cid != c.CatId {
+			c = &CategoryYear{CatId: cid}
+			res = append(res, c)
+		}
+		c.MonthSums[month-1] = amt
+	}
+	return res
+}
+
 // Frontend Helper Functions
 
 func GetInvestmentsMaxPage() int {

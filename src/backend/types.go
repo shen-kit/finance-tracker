@@ -133,6 +133,20 @@ func dbRowsToCategories(rows *sql.Rows) []DataRow {
 	return categories
 }
 
+type CategoryYear struct {
+	CatId     int
+	MonthSums [12]int // sum of records for this category for each month
+}
+
+func (cy CategoryYear) SpreadToStrings() []string {
+	var res = make([]string, 13, 13)
+	res[0] = fmt.Sprint(cy.CatId)
+	for i, val := range cy.MonthSums {
+		res[i+1] = fmt.Sprintf("$%.0f", float32(val)/100)
+	}
+	return res
+}
+
 type FilterOpts struct {
 	minCost   float32
 	maxCost   float32

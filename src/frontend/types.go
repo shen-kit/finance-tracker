@@ -70,16 +70,12 @@ func (t *updatableTable) defaultInputCapture(event *tcell.EventKey) *tcell.Event
 
 func (t *updatableTable) update(rows []backend.DataRow) {
 	t.maxPage = t.fGetMaxPage()
-
 	t.createHeaders()
-	var strTable [][]string
-	for _, row := range rows {
-		strTable = append(strTable, row.SpreadToStrings())
-	}
 
-	for i, strRow := range strTable {
-		for j, strCell := range strRow {
-			t.SetCell(i+1, j, tview.NewTableCell(" "+strCell+" "))
+	// create table body
+	for i, row := range rows {
+		for j, str := range row.SpreadToStrings() {
+			t.SetCell(i+1, j, tview.NewTableCell(" "+str+" "))
 		}
 	}
 }
@@ -167,13 +163,14 @@ type yearView struct {
 	tvTitle    *tview.TextView
 }
 
-func (yv *yearView) fGetData(offset int) []backend.DataRow {
-	return []backend.DataRow{}
-}
-
 func (yv *yearView) changeYear(by int) {
 	yv.yearOffset += by
 	yv.update(yv.fGetData(yv.yearOffset))
+}
+
+func (yv *yearView) fGetData(offset int) []backend.DataRow {
+	year := time.Now().Year() + offset
+	return backend.GetYearSummary(year)
 }
 
 func (yv *yearView) getCurPage() int { return yv.yearOffset }
