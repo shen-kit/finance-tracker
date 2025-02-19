@@ -61,10 +61,11 @@ type Investment struct {
 	Qty       float32
 }
 
-func (inv Investment) Spread() (int, time.Time, string, int, float32) {
+func (inv Investment) Spread() (id int, date time.Time, code string, unitprice int, qty float32) {
 	return inv.Id, inv.Date, inv.Code, inv.Unitprice, inv.Qty
 }
 
+// returns in order: ID, date, code, unitprice, qty, total value
 func (inv Investment) SpreadToStrings() []string {
 	return []string{
 		fmt.Sprint(inv.Id),
@@ -159,14 +160,14 @@ func (isr InvSummaryRow) SpreadToStrings() []string {
 	totalIn := avgBuyF * isr.qty
 	curVal := isr.curPrice * isr.qty
 	return []string{
-		isr.code,
+		isr.code,                                            // code
 		fmt.Sprintf("%.2f", isr.qty),                        // qty
-		fmt.Sprintf("%.2f", avgBuyF/100),                    // avg buy
-		fmt.Sprintf("%.2f", isr.curPrice),                   // cur price
-		fmt.Sprintf("%.2f", totalIn),                        // total in
-		fmt.Sprintf("%.2f", curVal),                         // current value
-		fmt.Sprintf("%.2f", totalIn-curVal),                 // P/L
-		fmt.Sprintf("%.2f%%", 100*(totalIn-curVal)/totalIn), // %P/L
+		fmt.Sprintf("$%.2f", avgBuyF),                       // avg buy
+		fmt.Sprintf("$%.2f", isr.curPrice),                  // cur price
+		fmt.Sprintf("$%.2f", totalIn),                       // total in
+		fmt.Sprintf("$%.2f", curVal),                        // current value
+		fmt.Sprintf("$%.2f", curVal-totalIn),                // P/L
+		fmt.Sprintf("%.2f%%", 100*(curVal-totalIn)/totalIn), // %P/L
 	}
 }
 

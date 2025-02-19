@@ -33,7 +33,7 @@ type Response struct {
 var myClient = &http.Client{Timeout: 10 * time.Second}
 
 func getJson(symbol string, target interface{}) error {
-	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?5d&interval=5d", symbol)
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?1d&interval=1d", symbol)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
@@ -56,7 +56,9 @@ func GetCurrentStockPrice(symbol string) (float32, error) {
 		return 0, err
 	}
 
-	fmt.Printf("res: %v\n", res)
-
+	// no price returned from backend
+	if len(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose) == 0 {
+		return -1, nil
+	}
 	return float32(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose[0]), nil
 }
