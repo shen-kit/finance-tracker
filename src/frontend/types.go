@@ -78,6 +78,7 @@ func (t *updatableTable) update(rows []backend.DataRow) {
 	for i, row := range rows {
 		for j, str := range row.SpreadToStrings() {
 			newCell := tview.NewTableCell(" " + str + " ")
+			// set text colour red/green gradient for money cells
 			if strings.Contains(str, "$") {
 				r, g, b := tview.Styles.PrimaryTextColor.RGB()
 				if f, err := strconv.ParseFloat(strings.Trim(str, " $"), 32); err == nil {
@@ -86,6 +87,7 @@ func (t *updatableTable) update(rows []backend.DataRow) {
 					gNew := max(20, min(g+fInt, 240))
 					bNew := max(20, min(b-int32(math.Abs(float64(fInt))), 240))
 					newCell.SetTextColor(tcell.NewRGBColor(rNew, gNew, bNew))
+					newCell.SetText(strings.Replace(newCell.Text, "$-", "-$", 1))
 				}
 			}
 			t.SetCell(i+1, j, newCell)
