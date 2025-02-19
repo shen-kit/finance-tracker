@@ -132,8 +132,9 @@ func (t *updatableTable) getCellInt(row, col int) int {
 	return int(res)
 }
 
+// get the text of a cell, remove padding spaces + '$' symbol
 func (t *updatableTable) getCellString(row, col int) string {
-	return strings.Trim(t.GetCell(row, col).Text, " $")
+	return strings.Replace(strings.TrimSpace(t.GetCell(row, col).Text), "$", "", 1)
 }
 
 func newUpdatableTable(headers []string) updatableTable {
