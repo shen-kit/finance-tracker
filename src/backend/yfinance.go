@@ -53,12 +53,12 @@ func GetCurrentStockPrice(symbol string) (float32, error) {
 	res := &Response{}
 	err := getJson(symbol, res)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	// no price returned from backend
 	if len(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose) == 0 {
-		return -1, nil
+		return -2, nil
 	}
 	return float32(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose[0]), nil
 }

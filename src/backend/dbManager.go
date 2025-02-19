@@ -389,29 +389,23 @@ func GetInvestmentSummary() []DataRow {
 	}
 	rows.Close()
 
-	for _, row := range invRows {
+	for i := range len(invRows) {
 
 		// only update once per day maximum
-		r := db.QueryRow("SELECT st_unitprice FROM stock WHERE st_code = ? AND st_last_updated >= ?", row.code, time.Now().AddDate(0, 0, -1))
+		r := db.QueryRow("SELECT st_unitprice FROM stock WHERE st_code = ? AND st_last_updated >= ?", invRows[i].code, time.Now().AddDate(0, 0, -1))
 
-		if err := r.Scan(&row.curPrice); err != nil {
-			// get stock price from yahoo finance
-			row.curPrice, err = GetCurrentStockPrice(row.code)
+		// try to use unitprice from db, if not exists get from yahoo finance and update db
+		if err := r.Scan(&invRows[i].curPrice); err != nil {
+			invRows[i].curPrice, err = GetCurrentStockPrice(invRows[i].code)
+			if err != nil {
+				panic(err)
+			}
+
+			_, err := db.Exec("INSERT OR REPLACE INTO stock (st_code, st_unitprice, st_last_updated) VALUES (?,?,?)", invRows[i].code, invRows[i].curPrice, time.Now())
 			if err != nil {
 				panic(err)
 			}
 		}
-
-		// stock doesn't yet exist in db
-		// if err = db.QueryRow("SELECT * FROM stock WHERE st_code = ?", row.code).Err(); err != nil {
-		// 	_, err = db.Exec("INSERT INTO stock (st_code, st_unitprice, st_last_updated) VALUES (?,?,?)",
-		// 		row.code, row.curPrice, time.Now())
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// } else { // stock exists, just outdated
-		// 	db.Exec("UPDATE stock SET st_unitprice = ?, st_last_updated = ? WHERE st_code = ?", row.curPrice, time.Now(), row.code)
-		// }
 	}
 
 	dRows := make([]DataRow, len(invRows))
