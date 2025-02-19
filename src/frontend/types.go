@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -76,7 +77,18 @@ func (t *updatableTable) update(rows []backend.DataRow) {
 	// create table body
 	for i, row := range rows {
 		for j, str := range row.SpreadToStrings() {
-			t.SetCell(i+1, j, tview.NewTableCell(" "+str+" "))
+			newCell := tview.NewTableCell(" " + str + " ")
+			if strings.Contains(str, "$") {
+				r, g, b := tview.Styles.PrimaryTextColor.RGB()
+				if f, err := strconv.ParseFloat(strings.Trim(str, " $"), 32); err == nil {
+					fInt := int32(f)
+					rNew := max(20, min(r-fInt, 240))
+					gNew := max(20, min(g+fInt, 240))
+					bNew := max(20, min(b-int32(math.Abs(float64(fInt))), 240))
+					newCell.SetTextColor(tcell.NewRGBColor(rNew, gNew, bNew))
+				}
+			}
+			t.SetCell(i+1, j, newCell)
 		}
 	}
 }
