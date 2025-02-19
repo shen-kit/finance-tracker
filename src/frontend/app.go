@@ -35,7 +35,10 @@ func CreateTUI() {
 	invForm := createInvestmentForm()
 	setInvTableKeybinds(invTable, invForm)
 
-	createHomepage(recTable, catTable, invTable, monthView, yearView)
+	invSummary := createInvSummaryTable()
+	setInvSummaryTableKeybinds(invSummary)
+
+	createHomepage(recTable, catTable, invTable, invSummary, monthView, yearView)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or any typical 'back' key when on option select page
@@ -72,7 +75,7 @@ func CreateTUI() {
 	}
 }
 
-func createHomepage(recTable, catTable, invTable *updatableTable, monthView *monthGridView, yearView *yearView) {
+func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, monthView *monthGridView, yearView *yearView) {
 	flex = tview.NewFlex()
 
 	optionsList = tview.NewList().
@@ -85,6 +88,7 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 		AddItem("  Records", "records", 0, func() { app.SetFocus(recTable) }).
 		AddItem("  Categories", "categories", 0, func() { app.SetFocus(catTable) }).
 		AddItem("  Investments", "investments", 0, func() { app.SetFocus(invTable) }).
+		AddItem("  Investment Summary ", "invSummary", 0, func() { app.SetFocus(invSummary) }).
 		AddItem("  Quit", "quit", 0, func() { app.Stop() })
 
 	optionsList.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -100,6 +104,8 @@ func createHomepage(recTable, catTable, invTable *updatableTable, monthView *mon
 			showUpdatablePrim(catTable, false)
 		case "investments":
 			showUpdatablePrim(invTable, false)
+		case "invSummary":
+			showUpdatablePrim(invSummary, false)
 		}
 	})
 

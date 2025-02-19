@@ -147,6 +147,29 @@ func (cy CategoryYear) SpreadToStrings() []string {
 	return res
 }
 
+type InvSummaryRow struct {
+	code     string
+	qty      float32
+	avgBuy   int
+	curPrice float32 // float32 as retrieved from yahoo finance
+}
+
+func (isr InvSummaryRow) SpreadToStrings() []string {
+	avgBuyF := float32(isr.avgBuy) / 100
+	totalIn := avgBuyF * isr.qty
+	curVal := isr.curPrice * isr.qty
+	return []string{
+		isr.code,
+		fmt.Sprintf("%.2f", isr.qty),                        // qty
+		fmt.Sprintf("%.2f", avgBuyF/100),                    // avg buy
+		fmt.Sprintf("%.2f", isr.curPrice),                   // cur price
+		fmt.Sprintf("%.2f", totalIn),                        // total in
+		fmt.Sprintf("%.2f", curVal),                         // current value
+		fmt.Sprintf("%.2f", totalIn-curVal),                 // P/L
+		fmt.Sprintf("%.2f%%", 100*(totalIn-curVal)/totalIn), // %P/L
+	}
+}
+
 type FilterOpts struct {
 	minCost   float32
 	maxCost   float32

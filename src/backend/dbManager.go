@@ -359,6 +359,31 @@ func GetYearSummary(year int) []DataRow {
 	return res
 }
 
+func GetInvestmentSummary() []DataRow {
+	sql := `SELECT inv_code, SUM(inv_qty), SUM(inv_qty * inv_unitprice) / SUM(inv_qty)
+          FROM investment
+          GROUP BY inv_code
+          ORDER BY inv_code`
+	rows, err := db.Query(sql)
+	if err != nil {
+		panic(err)
+	}
+
+	var invRows []DataRow
+	for rows.Next() {
+		var row InvSummaryRow
+		if err := rows.Scan(&row.code, &row.qty, &row.avgBuy); err != nil {
+			panic(err)
+		}
+		row.curPrice, err = GetCurrentStockPrice(row.code)
+		if err != nil {
+			panic(err)
+		}
+		invRows = append(invRows, row)
+	}
+	return invRows
+}
+
 // Frontend Helper Functions
 
 func GetInvestmentsMaxPage() int {

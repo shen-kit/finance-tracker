@@ -48,6 +48,8 @@ func (t *updatableTable) fGetData(int) []backend.DataRow {
 		return backend.GetCategories(t.curPage)
 	case "Investments":
 		return backend.GetInvestmentsRecent(t.curPage)
+	case "Investment Summary":
+		return backend.GetInvestmentSummary()
 	default:
 		panic("fGetData encountered an unknown title: " + t.title)
 	}
