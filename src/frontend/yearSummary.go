@@ -14,7 +14,7 @@ func createYearView() *yearView {
 	tvTitle.SetBorderPadding(1, 1, 3, 3)
 
 	yearRecTable := newUpdatableTable(strings.Split(":Jan:Feb:Mar:Apr:May:Jun:Jul:Aug:Sep:Oct:Nov:Dec", ":"))
-	yearRecTable.SetSelectable(false, false).SetBorder(false)
+	yearRecTable.SetBorder(false)
 	yearRecTable.fGetMaxPage = func() int { return 0 }
 
 	yearGrid := tview.NewGrid().

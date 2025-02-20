@@ -10,7 +10,6 @@ func createInvSummaryTable() *updatableTable {
 	table := newUpdatableTable(strings.Split("Code:Qty:Avg Buy Price:Current Price:Total In:Current Value:P/L:%P/L", ":"))
 	table.title = "Investment Summary"
 	table.fGetMaxPage = func() int { return 0 }
-	table.SetSelectable(false, false)
 	return &table
 }
 
