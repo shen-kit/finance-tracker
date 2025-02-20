@@ -17,22 +17,26 @@ func CreateTUI() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
-	recTable := createRecordsTable()
 	rf := createRecordForm()
+	cf := createCategoryForm()
+	invForm := createInvestmentForm()
+
+	monthView := createMonthSummary()
+	setMonthGridKeybinds(monthView, rf)
+
+	recTable := createRecordsTable(monthView)
 	setRecTableKeybinds(recTable, rf)
 
-	monthView := createMonthSummary(recTable)
-	setMonthGridKeybinds(monthView, rf)
+	monthView.table = recTable
+	monthView.AddItem(recTable, 2, 0, 1, 1, 0, 0, true)
 
 	yearView := createYearView()
 	setYearViewKeybinds(yearView)
 
 	catTable := createCategoriesView()
-	cf := createCategoryForm()
 	setCatTableKeybinds(catTable, cf)
 
 	invTable := createInvestmentsTable()
-	invForm := createInvestmentForm()
 	setInvTableKeybinds(invTable, invForm)
 
 	invSummary := createInvSummaryTable()
@@ -52,19 +56,19 @@ func CreateTUI() {
 			switch event.Rune() {
 			case 'm':
 				optionsList.SetCurrentItem(0)
-				app.SetFocus(monthView)
+				focusUpdatablePrim(monthView)
 			case 'y':
 				optionsList.SetCurrentItem(1)
-				app.SetFocus(yearView)
+				focusUpdatablePrim(yearView)
 			case 'r':
 				optionsList.SetCurrentItem(2)
-				app.SetFocus(recTable)
+				focusUpdatablePrim(recTable)
 			case 'c':
 				optionsList.SetCurrentItem(3)
-				app.SetFocus(catTable)
+				focusUpdatablePrim(catTable)
 			case 'i':
 				optionsList.SetCurrentItem(4)
-				app.SetFocus(invTable)
+				focusUpdatablePrim(invTable)
 			}
 		}
 		return event
@@ -83,29 +87,29 @@ func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, mo
 		SetHighlightFullLine(true).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
 		// AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
-		AddItem("  View Month Summary", "month", 0, func() { app.SetFocus(recTable) }).
-		AddItem("  View Year Summary", "year", 0, func() { app.SetFocus(yearView) }).
-		AddItem("  Records", "records", 0, func() { app.SetFocus(recTable) }).
-		AddItem("  Categories", "categories", 0, func() { app.SetFocus(catTable) }).
-		AddItem("  Investments", "investments", 0, func() { app.SetFocus(invTable) }).
-		AddItem("  Investment Summary ", "invSummary", 0, func() { app.SetFocus(invSummary) }).
+		AddItem("  View Month Summary", "month", 0, func() { focusUpdatablePrim(monthView) }).
+		AddItem("  View Year Summary", "year", 0, func() { focusUpdatablePrim(yearView) }).
+		AddItem("  Records", "records", 0, func() { focusUpdatablePrim(recTable) }).
+		AddItem("  Categories", "categories", 0, func() { focusUpdatablePrim(catTable) }).
+		AddItem("  Investments", "investments", 0, func() { focusUpdatablePrim(invTable) }).
+		AddItem("  Investment Summary ", "invSummary", 0, func() { focusUpdatablePrim(invSummary) }).
 		AddItem("  Quit", "quit", 0, func() { app.Stop() })
 
 	optionsList.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		clearScreen()
 		switch secondaryText {
 		case "month":
-			showUpdatablePrim(monthView, false)
+			showUpdatablePrim(monthView)
 		case "year":
-			showUpdatablePrim(yearView, false)
+			showUpdatablePrim(yearView)
 		case "records":
-			showUpdatablePrim(recTable, false)
+			showUpdatablePrim(recTable)
 		case "categories":
-			showUpdatablePrim(catTable, false)
+			showUpdatablePrim(catTable)
 		case "investments":
-			showUpdatablePrim(invTable, false)
+			showUpdatablePrim(invTable)
 		case "invSummary":
-			showUpdatablePrim(invSummary, false)
+			showUpdatablePrim(invSummary)
 		}
 	})
 
@@ -126,10 +130,12 @@ func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, mo
 
 	optionsList.SetTitle("Options").
 		SetBorder(true).
-		SetBorderPadding(1, 1, 2, 2)
+		SetBorderPadding(1, 1, 2, 2).
+		SetFocusFunc(func() { optionsList.SetBorderColor(tview.Styles.TertiaryTextColor) }).
+		SetBlurFunc(func() { optionsList.SetBorderColor(tview.Styles.BorderColor) })
 
 	flex.AddItem(optionsList, 30, 0, true)
-	showUpdatablePrim(monthView, false)
+	showUpdatablePrim(monthView)
 
 	pages.AddPage("main", flex, true, true)
 }
@@ -144,7 +150,7 @@ func setTheme() {
 		TitleColor:                  tcell.NewRGBColor(198, 208, 245), // Box titles.
 		PrimaryTextColor:            tcell.NewRGBColor(198, 208, 245), // Primary text.
 		SecondaryTextColor:          tcell.NewRGBColor(181, 191, 226), // Secondary text (e.g. labels).
-		TertiaryTextColor:           tcell.NewRGBColor(165, 173, 206), // Tertiary text (e.g. subtitles, notes).
+		TertiaryTextColor:           tcell.NewRGBColor(239, 159, 118), // Tertiary text (e.g. subtitles, notes).
 		InverseTextColor:            tcell.NewRGBColor(48, 52, 70),    // Text on primary-colored backgrounds.
 		ContrastSecondaryTextColor:  tcell.NewRGBColor(65, 69, 89),    // Secondary text on ContrastBackgroundColor-colored backgrounds.
 	}

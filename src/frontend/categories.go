@@ -18,7 +18,7 @@ type categoryForm struct {
 }
 
 func createCategoriesView() *updatableTable {
-	table := newUpdatableTable(strings.Split("ID:Name:Type:Description", ":"))
+	table := newUpdatableTable(strings.Split("ID:Name:Type:Description", ":"), nil)
 	table.title = "Categories"
 	table.fGetMaxPage = func() int { return 0 }
 	return &table
@@ -87,7 +87,8 @@ func createCategoryForm() categoryForm {
 		SetFieldBackgroundColor(tview.Styles.MoreContrastBackgroundColor).
 		SetButtonBackgroundColor(tview.Styles.MoreContrastBackgroundColor)
 
-	form.SetBorder(true)
+	form.SetBorder(true).
+		SetBorderColor(tview.Styles.TertiaryTextColor)
 
 	return categoryForm{
 		form: form, iName: inName, iDesc: inDesc, iIsIncome: inIsIncome, tvMsg: formMsg,

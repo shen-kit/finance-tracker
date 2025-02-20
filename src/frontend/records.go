@@ -20,8 +20,8 @@ type recordForm struct {
 	tvMsg *tview.TextView
 }
 
-func createRecordsTable() *updatableTable {
-	table := newUpdatableTable(strings.Split("ID:Date:Category:Description:Amount", ":"))
+func createRecordsTable(monthGrid borderColorChanger) *updatableTable {
+	table := newUpdatableTable(strings.Split("ID:Date:Category:Description:Amount", ":"), monthGrid)
 	table.title = "Records"
 	table.fGetMaxPage = backend.GetRecordsMaxPage
 	return &table
@@ -109,7 +109,8 @@ func createRecordForm() recordForm {
 		SetFieldBackgroundColor(tview.Styles.MoreContrastBackgroundColor).
 		SetButtonBackgroundColor(tview.Styles.MoreContrastBackgroundColor)
 
-	form.SetBorder(true)
+	form.SetBorder(true).
+		SetBorderColor(tview.Styles.TertiaryTextColor)
 
 	return recordForm{
 		form: form, iDate: inDate, iAmt: inAmt, iCat: inCat, iDesc: inDesc, tvMsg: formMsg,

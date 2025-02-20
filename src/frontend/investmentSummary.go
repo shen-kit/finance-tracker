@@ -4,12 +4,14 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 func createInvSummaryTable() *updatableTable {
-	table := newUpdatableTable(strings.Split("Code:Qty:Avg Buy Price:Current Price:Total In:Current Value:P/L:%P/L", ":"))
+	table := newUpdatableTable(strings.Split("Code:Qty:Avg Buy Price:Current Price:Total In:Current Value:P/L:%P/L", ":"), nil)
 	table.title = "Investment Summary"
 	table.fGetMaxPage = func() int { return 0 }
+	table.SetBlurFunc(func() { table.SetBorderColor(tview.Styles.BorderColor) })
 	return &table
 }
 

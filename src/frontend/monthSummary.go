@@ -9,7 +9,7 @@ import (
 	"github.com/shen-kit/finance-tracker/backend"
 )
 
-func createMonthSummary(recTable *updatableTable) *monthGridView {
+func createMonthSummary() *monthGridView {
 	tvTitle := tview.NewTextView().
 		SetTextAlign(tview.AlignCenter)
 	tvTitle.SetBorderPadding(1, 1, 3, 3)
@@ -21,16 +21,15 @@ func createMonthSummary(recTable *updatableTable) *monthGridView {
 		SetRows(3, 3, 0).
 		SetBorders(true).
 		AddItem(tvTitle, 0, 0, 1, 1, 0, 0, false).
-		AddItem(tvSummary, 1, 0, 1, 1, 0, 0, false).
-		AddItem(recTable, 2, 0, 1, 1, 0, 0, true)
+		AddItem(tvSummary, 1, 0, 1, 1, 0, 0, false)
 
-	msGrid.SetBorder(true).SetTitle("Month Summary")
+	msGrid.SetBorder(true).
+		SetTitle("Month Summary")
 
 	return &monthGridView{
 		Grid:      msGrid,
 		tvTitle:   tvTitle,
 		tvSummary: tvSummary,
-		table:     recTable,
 	}
 }
 

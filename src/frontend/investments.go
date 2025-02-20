@@ -21,7 +21,7 @@ type investmentForm struct {
 }
 
 func createInvestmentsTable() *updatableTable {
-	table := newUpdatableTable(strings.Split("ID:Date:Code:Unitprice:Qty:Total", ":"))
+	table := newUpdatableTable(strings.Split("ID:Date:Code:Unitprice:Qty:Total", ":"), nil)
 	table.title = "Investments"
 	table.fGetMaxPage = backend.GetInvestmentsMaxPage
 	return &table
@@ -95,7 +95,8 @@ func createInvestmentForm() investmentForm {
 		SetFieldBackgroundColor(tview.Styles.MoreContrastBackgroundColor).
 		SetButtonBackgroundColor(tview.Styles.MoreContrastBackgroundColor)
 
-	form.SetBorder(true)
+	form.SetBorder(true).
+		SetBorderColor(tview.Styles.TertiaryTextColor)
 
 	return investmentForm{
 		form: form, iDate: inDate, iCode: inCode, iUnitprice: inUnitprice, iQty: inQty, tvMsg: formMsg,

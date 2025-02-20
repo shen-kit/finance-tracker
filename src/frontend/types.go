@@ -19,17 +19,23 @@ type updatable interface {
 	reset()
 }
 
+type borderColorChanger interface {
+	SetBorderColor(tcell.Color) *tview.Box
+}
+
 type updatablePrim interface {
 	updatable
 	tview.Primitive
+	borderColorChanger
 }
 
-func showUpdatablePrim(p updatablePrim, focus bool) {
+func showUpdatablePrim(p updatablePrim) {
 	p.reset()
-	flex.AddItem(p, 0, 1, true)
-	if focus {
-		app.SetFocus(p)
-	}
+	flex.AddItem(p, 0, 1, false)
+}
+
+func focusUpdatablePrim(p updatablePrim) {
+	app.SetFocus(p)
 }
 
 type updatableTable struct {
@@ -139,15 +145,28 @@ func (t *updatableTable) getCellString(row, col int) string {
 	return strings.Replace(strings.TrimSpace(t.GetCell(row, col).Text), "$", "", 1)
 }
 
-func newUpdatableTable(headers []string) updatableTable {
+func newUpdatableTable(headers []string, parent borderColorChanger) updatableTable {
 	t := tview.NewTable().
 		SetBorders(false).
 		SetSeparator(tview.Borders.Vertical).
 		SetFixed(1, 0)
 	t.SetBorder(true).SetBorderPadding(1, 1, 2, 2)
-	// only highlight cells when table focused
-	t.SetFocusFunc(func() { t.SetSelectable(true, false) })
-	t.SetBlurFunc(func() { t.SetSelectable(false, false) })
+
+	t.SetFocusFunc(func() {
+		t.SetSelectable(true, false)
+		t.SetBorderColor(tview.Styles.TertiaryTextColor)
+		if parent != nil {
+			parent.SetBorderColor(tview.Styles.TertiaryTextColor)
+		}
+	}).SetBlurFunc(func() {
+		t.SetSelectable(false, false)
+		t.SetBorderColor(tview.Styles.BorderColor)
+		if parent != nil {
+			parent.SetBorderColor(tview.Styles.BorderColor)
+		}
+
+	})
+
 	return updatableTable{
 		Table:   t,
 		headers: headers,
