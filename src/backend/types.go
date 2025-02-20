@@ -60,10 +60,11 @@ type Investment struct {
 	Qty       float32
 }
 
-func (inv Investment) Spread() (int, time.Time, string, int, float32) {
+func (inv Investment) Spread() (id int, date time.Time, code string, unitprice int, qty float32) {
 	return inv.Id, inv.Date, inv.Code, inv.Unitprice, inv.Qty
 }
 
+// returns in order: ID, date, code, unitprice, qty, total value
 func (inv Investment) SpreadToStrings() []string {
 	return []string{
 		fmt.Sprint(inv.Id),            // id
@@ -144,6 +145,29 @@ func (cy CategoryYear) SpreadToStrings() []string {
 		res[i+1] = getMoneyCellString(float32(val)/100, 0, 6)
 	}
 	return res
+}
+
+type InvSummaryRow struct {
+	code     string
+	qty      float32
+	avgBuy   int
+	curPrice float32 // float32 as retrieved from yahoo finance
+}
+
+func (isr InvSummaryRow) SpreadToStrings() []string {
+	avgBuyF := float32(isr.avgBuy) / 100
+	totalIn := avgBuyF * isr.qty
+	curVal := isr.curPrice * isr.qty
+	return []string{
+		isr.code,                                            // code
+		fmt.Sprintf("%.2f", isr.qty),                        // qty
+		fmt.Sprintf("$%.2f", avgBuyF),                       // avg buy
+		fmt.Sprintf("$%.2f", isr.curPrice),                  // cur price
+		fmt.Sprintf("$%.2f", totalIn),                       // total in
+		fmt.Sprintf("$%.2f", curVal),                        // current value
+		fmt.Sprintf("$%.2f", curVal-totalIn),                // P/L
+		fmt.Sprintf("%.2f%%", 100*(curVal-totalIn)/totalIn), // %P/L
+	}
 }
 
 type FilterOpts struct {

@@ -3,13 +3,12 @@ package backend
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"math"
 	"math/rand"
 	"strings"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
@@ -44,6 +43,7 @@ func SetupDb(path string) {
       cat_isincome BOOL        NOT NULL,
       cat_desc     VARCHAR(40)
     );
+
     CREATE TABLE IF NOT EXISTS record (
       rec_id   INTEGER     NOT NULL  PRIMARY KEY,
       rec_date DATE        NOT NULL,
@@ -52,12 +52,19 @@ func SetupDb(path string) {
       cat_id   INTEGER     NOT NULL DEFAULT 0,
       CONSTRAINT category_record_fk FOREIGN KEY (cat_id) REFERENCES category (cat_id) ON UPDATE CASCADE ON DELETE SET NULL
     );
+
     CREATE TABLE IF NOT EXISTS investment (
       inv_id        INTEGER     NOT NULL  PRIMARY KEY,
       inv_date      DATE        NOT NULL,
       inv_code      VARCHAR(10) NOT NULL,
       inv_qty       NUMBER(7,2) NOT NULL,
       inv_unitprice NUMBER(8)   NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock (
+      st_code         VARCHAR(10) NOT NULL PRIMARY KEY,
+      st_unitprice    NUMBER(8,2) NOT NULL,
+      st_last_updated DATE        NOT NULL
     );
     `
 		if _, err = db.Exec(sql); err != nil {
@@ -82,14 +89,14 @@ func SetupDb(path string) {
 		}
 
 		// query statements
-		getInvRecStmt, err = db.Prepare(`SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
+		getInvRecStmt, err = db.Prepare(`SELECT inv_id, inv_date, inv_code, inv_unitprice, inv_qty
                                      FROM investment
                                      ORDER BY inv_date DESC
                                      LIMIT ?, ?`)
 		if err != nil {
 			log.Println("Failed initialising getInvRecStmt: ", err)
 		}
-		getInvFilStmt, err = db.Prepare(`SELECT inv_id, inv_date, inv_code, inv_qty, inv_unitprice
+		getInvFilStmt, err = db.Prepare(`SELECT inv_id, inv_date, inv_code, inv_unitprice, inv_qty
                                      FROM investment
                                      WHERE inv_qty*inv_unitprice BETWEEN ? AND ?
                                        AND inv_date BETWEEN ? AND ?
@@ -135,6 +142,7 @@ func SetupDb(path string) {
 	// open connection to db
 	var err error
 	db, err = sql.Open("sqlite3", path)
+	db.SetMaxOpenConns(1)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -214,7 +222,7 @@ func InsertCategory(cat Category) {
 }
 
 func InsertInvestment(inv Investment) {
-	_, date, code, qty, unitprice := inv.Spread()
+	_, date, code, unitprice, qty := inv.Spread()
 	if _, err := insInvStmt.Exec(date, code, qty, unitprice); err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
 	}
@@ -342,6 +350,7 @@ func GetYearSummary(year int) []DataRow {
 	if err != nil {
 		panic(err)
 	}
+	defer rows.Close()
 
 	var res = []DataRow{}
 	var c *CategoryYear
@@ -357,6 +366,54 @@ func GetYearSummary(year int) []DataRow {
 		c.MonthSums[month-1] = amt
 	}
 	return res
+}
+
+func GetInvestmentSummary() []DataRow {
+	sql := `SELECT inv_code, SUM(inv_qty), SUM(inv_qty * inv_unitprice) / SUM(inv_qty)
+          FROM investment
+          GROUP BY inv_code
+          ORDER BY inv_code`
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		panic(err)
+	}
+
+	var invRows []InvSummaryRow
+	for rows.Next() {
+		var row InvSummaryRow
+		if err := rows.Scan(&row.code, &row.qty, &row.avgBuy); err != nil {
+			panic(err)
+		}
+		invRows = append(invRows, row)
+	}
+	rows.Close()
+
+	for i := range len(invRows) {
+
+		// only update once per day maximum
+		r := db.QueryRow("SELECT st_unitprice FROM stock WHERE st_code = ? AND st_last_updated >= ?", invRows[i].code, time.Now().AddDate(0, 0, -1))
+
+		// try to use unitprice from db, if not exists get from yahoo finance and update db
+		if err := r.Scan(&invRows[i].curPrice); err != nil {
+			invRows[i].curPrice, err = GetCurrentStockPrice(invRows[i].code)
+			if err != nil {
+				panic(err)
+			}
+
+			_, err := db.Exec("INSERT OR REPLACE INTO stock (st_code, st_unitprice, st_last_updated) VALUES (?,?,?)", invRows[i].code, invRows[i].curPrice, time.Now())
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	dRows := make([]DataRow, len(invRows))
+	for i, v := range invRows {
+		dRows[i] = v
+	}
+
+	return dRows
 }
 
 // Frontend Helper Functions
@@ -404,7 +461,7 @@ func UpdateCategory(id int, cat Category) {
 }
 
 func UpdateInvestment(id int, inv Investment) {
-	_, date, code, qty, unitprice := inv.Spread()
+	_, date, code, unitprice, qty := inv.Spread()
 	_, err := db.Exec("UPDATE investment SET inv_date = ?, inv_code = ?, inv_qty = ?, inv_unitprice = ? WHERE inv_id = ?", date, code, qty, unitprice, id)
 	if err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
