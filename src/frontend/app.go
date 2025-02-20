@@ -139,7 +139,7 @@ func setTheme() {
 	tview.Styles = tview.Theme{
 		PrimitiveBackgroundColor:    tcell.NewRGBColor(48, 52, 70),    // Main background color for primitives.
 		ContrastBackgroundColor:     tcell.NewRGBColor(129, 200, 190), // Background color for contrasting elements.
-		MoreContrastBackgroundColor: tcell.NewRGBColor(239, 159, 118), // Background color for even more contrasting elements.
+		MoreContrastBackgroundColor: tcell.NewRGBColor(115, 121, 148), // Background color for even more contrasting elements.
 		BorderColor:                 tcell.NewRGBColor(148, 156, 187), // Box borders.
 		TitleColor:                  tcell.NewRGBColor(198, 208, 245), // Box titles.
 		PrimaryTextColor:            tcell.NewRGBColor(198, 208, 245), // Primary text.

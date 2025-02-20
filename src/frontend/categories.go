@@ -83,7 +83,9 @@ func createCategoryForm() categoryForm {
 		AddFormItem(inIsIncome).
 		AddFormItem(formMsg).
 		AddButton("Save", nil).
-		AddButton("Cancel", nil)
+		AddButton("Cancel", nil).
+		SetFieldBackgroundColor(tview.Styles.MoreContrastBackgroundColor).
+		SetButtonBackgroundColor(tview.Styles.MoreContrastBackgroundColor)
 
 	form.SetBorder(true)
 
