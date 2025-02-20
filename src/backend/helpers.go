@@ -20,6 +20,12 @@ func getMonthStartAndEnd(t time.Time) (time.Time, time.Time) {
 	mStart = mStart.Add(-time.Second)
 	mEnd := mStart.AddDate(0, 1, 0)
 	mEnd = mEnd.Add(-time.Second)
-
 	return mStart, mEnd
+}
+
+// returns a string right-aligned, with '  $amt.xx' format
+func getMoneyCellString(amt float32, decimals, width int) string {
+	fmtStr1 := fmt.Sprintf("%%%ds", width)
+	fmtStr2 := fmt.Sprintf("$%%.%df", decimals)
+	return fmt.Sprintf(fmtStr1, fmt.Sprintf(fmtStr2, amt))
 }

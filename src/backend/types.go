@@ -24,13 +24,12 @@ func (rec Record) Spread() (int, time.Time, string, int, int) {
 }
 
 func (rec Record) SpreadToStrings() []string {
-	id, date, desc, amt, catId := rec.Spread()
 	return []string{
-		fmt.Sprint(id),
-		date.Format("2006-01-02"),
-		GetCategoryNameFromId(catId),
-		desc,
-		fmt.Sprintf("$%.2f", float32(amt)/100),
+		fmt.Sprint(rec.Id),
+		rec.Date.Format("2006-01-02"),
+		GetCategoryNameFromId(rec.CatId),
+		rec.Desc,
+		getMoneyCellString(float32(rec.Amt)/100, 2, 8),
 	}
 }
 
@@ -67,12 +66,12 @@ func (inv Investment) Spread() (int, time.Time, string, int, float32) {
 
 func (inv Investment) SpreadToStrings() []string {
 	return []string{
-		fmt.Sprint(inv.Id),
-		inv.Date.Format("2006-01-02"),
-		inv.Code,
-		fmt.Sprintf("$%.2f", float32(inv.Unitprice)/100),
-		fmt.Sprintf("%.1f", inv.Qty),
-		fmt.Sprintf("$%.2f", float32(inv.Unitprice)/100*inv.Qty),
+		fmt.Sprint(inv.Id),            // id
+		inv.Date.Format("2006-01-02"), // date
+		inv.Code,                      // code
+		getMoneyCellString(float32(inv.Unitprice)/100, 2, 8),         // unitprice
+		fmt.Sprintf("%.1f", inv.Qty),                                 // qty
+		getMoneyCellString(float32(inv.Unitprice)*inv.Qty/100, 2, 9), // value
 	}
 }
 
@@ -142,7 +141,7 @@ func (cy CategoryYear) SpreadToStrings() []string {
 	var res = make([]string, 13, 13)
 	res[0] = GetCategoryNameFromId(cy.CatId)
 	for i, val := range cy.MonthSums {
-		res[i+1] = fmt.Sprintf("$%.0f", float32(val)/100)
+		res[i+1] = getMoneyCellString(float32(val)/100, 0, 6)
 	}
 	return res
 }
