@@ -29,7 +29,7 @@ func (rec Record) SpreadToStrings() []string {
 		rec.Date.Format("2006-01-02"),
 		GetCategoryNameFromId(rec.CatId),
 		rec.Desc,
-		getMoneyCellString(float32(rec.Amt)/100, 2, 8),
+		rightAlignText(float32(rec.Amt)/100, 2, 8, "$"),
 	}
 }
 
@@ -70,9 +70,9 @@ func (inv Investment) SpreadToStrings() []string {
 		fmt.Sprint(inv.Id),            // id
 		inv.Date.Format("2006-01-02"), // date
 		inv.Code,                      // code
-		getMoneyCellString(float32(inv.Unitprice)/100, 2, 8),         // unitprice
-		fmt.Sprintf("%.1f", inv.Qty),                                 // qty
-		getMoneyCellString(float32(inv.Unitprice)*inv.Qty/100, 2, 9), // value
+		rightAlignText(float32(inv.Unitprice)/100, 2, 8, "$"),         // unitprice
+		rightAlignText(inv.Qty, 1, 6, ""),                             // qty
+		rightAlignText(float32(inv.Unitprice)*inv.Qty/100, 2, 9, "$"), // value
 	}
 }
 
@@ -142,7 +142,7 @@ func (cy CategoryYear) SpreadToStrings() []string {
 	var res = make([]string, 13, 13)
 	res[0] = GetCategoryNameFromId(cy.CatId)
 	for i, val := range cy.MonthSums {
-		res[i+1] = getMoneyCellString(float32(val)/100, 0, 6)
+		res[i+1] = rightAlignText(float32(val)/100, 0, 6, "$")
 	}
 	return res
 }
@@ -160,12 +160,12 @@ func (isr InvSummaryRow) SpreadToStrings() []string {
 	curVal := isr.curPrice * isr.qty
 	return []string{
 		isr.code,                                            // code
-		fmt.Sprintf("%.2f", isr.qty),                        // qty
-		getMoneyCellString(avgBuyF, 2, 8),                   // avg buy
-		getMoneyCellString(isr.curPrice, 2, 8),              // cur price
-		getMoneyCellString(totalIn, 2, 9),                   // total in
-		getMoneyCellString(curVal, 2, 8),                    // current val
-		getMoneyCellString(curVal-totalIn, 2, 9),            // P/L
+		rightAlignText(isr.qty, 2, 6, ""),                   // qty
+		rightAlignText(avgBuyF, 2, 13, "$"),                 // avg buy
+		rightAlignText(isr.curPrice, 2, 13, "$"),            // cur price
+		rightAlignText(totalIn, 2, 9, "$"),                  // total in
+		rightAlignText(curVal, 2, 13, "$"),                  // current val
+		rightAlignText(curVal-totalIn, 2, 9, "$"),           // P/L
 		fmt.Sprintf("%.2f%%", 100*(curVal-totalIn)/totalIn), // %P/L
 	}
 }
