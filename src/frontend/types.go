@@ -143,9 +143,11 @@ func newUpdatableTable(headers []string) updatableTable {
 	t := tview.NewTable().
 		SetBorders(false).
 		SetSeparator(tview.Borders.Vertical).
-		SetFixed(1, 0).
-		SetSelectable(true, false)
+		SetFixed(1, 0)
 	t.SetBorder(true).SetBorderPadding(1, 1, 2, 2)
+	// only highlight cells when table focused
+	t.SetFocusFunc(func() { t.SetSelectable(true, false) })
+	t.SetBlurFunc(func() { t.SetSelectable(false, false) })
 	return updatableTable{
 		Table:   t,
 		headers: headers,

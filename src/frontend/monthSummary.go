@@ -10,7 +10,6 @@ import (
 )
 
 func createMonthSummary(recTable *updatableTable) *monthGridView {
-
 	tvTitle := tview.NewTextView().
 		SetTextAlign(tview.AlignCenter)
 	tvTitle.SetBorderPadding(1, 1, 3, 3)
