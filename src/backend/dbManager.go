@@ -75,7 +75,7 @@ func SetupDb(path string) {
 	createPreparedStmts := func() {
 		var err error
 		// insertion statements
-		insInvStmt, err = db.Prepare("INSERT INTO investment (inv_date, inv_code, inv_qty, inv_unitprice) VALUES (?,?,?,?)")
+		insInvStmt, err = db.Prepare("INSERT INTO investment (inv_date, inv_code, inv_unitprice, inv_qty) VALUES (?,?,?,?)")
 		if err != nil {
 			log.Println("Failed initialising insInvStmt: ", err)
 		}
@@ -223,7 +223,7 @@ func InsertCategory(cat Category) {
 
 func InsertInvestment(inv Investment) {
 	_, date, code, unitprice, qty := inv.Spread()
-	if _, err := insInvStmt.Exec(date, code, qty, unitprice); err != nil {
+	if _, err := insInvStmt.Exec(date, code, unitprice, qty); err != nil {
 		log.Fatal("Failed to insert into investment: ", err.Error())
 	}
 }
@@ -382,9 +382,11 @@ func GetInvestmentSummary() []DataRow {
 	var invRows []InvSummaryRow
 	for rows.Next() {
 		var row InvSummaryRow
-		if err := rows.Scan(&row.code, &row.qty, &row.avgBuy); err != nil {
+		var avgBuyF float64
+		if err := rows.Scan(&row.code, &row.qty, &avgBuyF); err != nil {
 			panic(err)
 		}
+		row.avgBuy = int(avgBuyF)
 		invRows = append(invRows, row)
 	}
 	rows.Close()

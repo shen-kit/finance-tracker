@@ -53,7 +53,7 @@ func setInvTableKeybinds(t *updatableTable, inf investmentForm) {
 			code := t.getCellString(row, 2)
 			unitprice := t.getCellString(row, 3)
 			qty := t.getCellString(row, 4)
-			showInvestmentForm(t, inf, id, date, code, qty, unitprice)
+			showInvestmentForm(t, inf, id, date, code, unitprice, qty)
 		} else {
 			return event
 		}
@@ -94,7 +94,9 @@ func createInvestmentForm() investmentForm {
 
 	form = tview.NewForm().
 		AddFormItem(inDate).
-		AddFormItem(inCode).AddFormItem(inUnitprice).AddFormItem(inQty).
+		AddFormItem(inCode).
+		AddFormItem(inUnitprice).
+		AddFormItem(inQty).
 		AddFormItem(formMsg).
 		AddButton("Save", nil).
 		AddButton("Cancel", nil).

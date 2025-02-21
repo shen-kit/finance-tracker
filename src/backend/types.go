@@ -161,12 +161,13 @@ func (isr InvSummaryRow) SpreadToStrings() []string {
 	return []string{
 		isr.code,                          // code
 		rightAlignText(isr.qty, 2, 6, ""), // qty
-		"#" + rightAlignText(avgBuyF, 2, 13, "$"),           // avg buy
-		"#" + rightAlignText(isr.curPrice, 2, 13, "$"),      // cur price
-		"#" + rightAlignText(totalIn, 2, 9, "$"),            // total in
-		"#" + rightAlignText(curVal, 2, 13, "$"),            // current val
-		rightAlignText(curVal-totalIn, 2, 9, "$"),           // P/L
-		fmt.Sprintf("%.2f%%", 100*(curVal-totalIn)/totalIn), // %P/L
+		"#" + rightAlignText(avgBuyF, 2, 13, "$"),                    // avg buy
+		"#" + rightAlignText(isr.curPrice, 2, 13, "$"),               // cur price
+		"#" + rightAlignText(totalIn, 2, 9, "$"),                     // total in
+		"#" + rightAlignText(curVal, 2, 13, "$"),                     // current val
+		rightAlignText(curVal-totalIn, 2, 9, "$"),                    // P/L
+		rightAlignText(100*(curVal-totalIn)/totalIn, 2, 7, "") + "%", // %P/L
+		// fmt.Sprintf("%.2f%%", 100*(curVal-totalIn)/totalIn), // %P/L
 	}
 }
 
