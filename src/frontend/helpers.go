@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 // UI
@@ -18,7 +19,38 @@ func clearScreen() {
 	app.SetFocus(flex)
 }
 
-// Utility Functions
+func formInputCapture(onCancel, onSubmit func()) func(*tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyCtrlQ || event.Key() == tcell.KeyEscape {
+			onCancel()
+			return nil
+		} else if event.Key() == tcell.KeyEnter && event.Modifiers() == tcell.ModCtrl {
+			onSubmit()
+			return nil
+		}
+		return event
+	}
+}
+
+func showModal(s string, actionFunc func(), prev tview.Primitive) {
+	modalText.SetText(s).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'n' || event.Rune() == 'N' || isBackKey(event) {
+			pages.HidePage("modal")
+		} else if event.Rune() == 'y' || event.Rune() == 'Y' {
+			actionFunc()
+		} else {
+			return event
+		}
+		pages.HidePage("modal")
+		app.SetFocus(prev)
+		return nil
+	})
+
+	pages.ShowPage("modal")
+	app.SetFocus(modalText)
+}
+
+// Utility
 
 func isPartialDate(s string, _ rune) bool {
 	regex0 := regexp.MustCompile(`^\d{0,4}$`)
@@ -45,19 +77,4 @@ func isBackKey(event *tcell.EventKey) bool {
 		event.Key() == tcell.KeyCtrlC ||
 		event.Key() == tcell.KeyCtrlQ ||
 		event.Key() == tcell.KeyEscape
-}
-
-// Form Input
-
-func formInputCapture(onCancel, onSubmit func()) func(*tcell.EventKey) *tcell.EventKey {
-	return func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyCtrlC || event.Key() == tcell.KeyCtrlQ || event.Key() == tcell.KeyEscape {
-			onCancel()
-			return nil
-		} else if event.Key() == tcell.KeyEnter && event.Modifiers() == tcell.ModCtrl {
-			onSubmit()
-			return nil
-		}
-		return event
-	}
 }
