@@ -35,7 +35,7 @@ func setCatTableKeybinds(t *updatableTable, cf categoryForm) {
 		} else if event.Rune() == 'd' { // delete category
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
-			showModal("Confirm delete? (y/n)", func() {
+			showModal("Delete this category? (y/n)", func() {
 				backend.DeleteCategory(id)
 				t.update(t.fGetData(t.curPage))
 				// set focus if deleted last row

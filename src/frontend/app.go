@@ -157,11 +157,13 @@ func createModal() {
 				AddItem(nil, 0, 1, false), width, 1, true).
 			AddItem(nil, 0, 1, false)
 	}
-	modalText = tview.NewTextView().SetTextAlign(tview.AlignCenter)
+	modalText = tview.NewTextView().SetTextStyle(tcell.StyleDefault.Bold(true)) //.SetTextAlign(tview.AlignCenter)
 	modalText.
-		SetBackgroundColor(tview.Styles.MoreContrastBackgroundColor).
-		SetBorder(true)
-	pages.AddPage("modal", modal(modalText, 50, 3), true, false)
+		SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor).
+		SetBorder(true).
+		SetBorderColor(tview.Styles.TertiaryTextColor)
+
+	pages.AddPage("modal", modal(modalText, 80, 3), true, false)
 }
 
 func setTheme() {

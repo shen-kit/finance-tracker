@@ -49,7 +49,7 @@ func SetupDb(path string) {
       rec_date DATE        NOT NULL,
       rec_desc VARCHAR(50) NOT NULL,
       rec_amt  NUMBER(9)   NOT NULL,
-      cat_id   INTEGER     NOT NULL DEFAULT 0,
+      cat_id   INTEGER,
       CONSTRAINT category_record_fk FOREIGN KEY (cat_id) REFERENCES category (cat_id) ON UPDATE CASCADE ON DELETE SET NULL
     );
 
@@ -431,6 +431,9 @@ func GetRecordsMaxPage() int {
 }
 
 func GetCategoryNameFromId(catId int) string {
+	if catId == -1 {
+		return "(deleted)"
+	}
 	var res string
 	db.QueryRow("SELECT cat_name FROM category WHERE cat_id = ?", catId).Scan(&res)
 	return res

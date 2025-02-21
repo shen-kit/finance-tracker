@@ -102,7 +102,7 @@ func dbRowsToRecords(rows *sql.Rows) []DataRow {
 	for rows.Next() {
 		var rec Record
 		if err := rows.Scan(&rec.Id, &rec.Date, &rec.Desc, &rec.Amt, &rec.CatId); err != nil {
-			panic(err)
+			rec.CatId = -1
 		}
 		records = append(records, rec)
 	}

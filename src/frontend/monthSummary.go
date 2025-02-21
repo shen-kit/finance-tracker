@@ -42,7 +42,7 @@ func setMonthGridKeybinds(mv *monthGridView, rf recordForm) {
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := mv.table.GetSelection()
 			id := mv.table.getCellInt(row, 0)
-			showModal("Confirm delete? (y/n)", func() {
+			showModal("Delete this record? (y/n)", func() {
 				backend.DeleteRecord(id)
 				mv.update(mv.fGetData(mv.getCurPage()))
 				// set focus if deleted last row

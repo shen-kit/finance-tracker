@@ -38,7 +38,7 @@ func setRecTableKeybinds(t *updatableTable, rf recordForm) {
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
-			showModal("Confirm delete? (y/n)", func() {
+			showModal("Delete this record? (y/n)", func() {
 				backend.DeleteRecord(id)
 				t.update(t.fGetData(t.curPage))
 				// set focus if deleted last row
