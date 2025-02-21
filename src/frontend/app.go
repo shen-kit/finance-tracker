@@ -3,6 +3,7 @@ package frontend
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/shen-kit/finance-tracker/backend"
 )
 
 var (
@@ -72,6 +73,11 @@ func CreateTUI() {
 			}
 		}
 		return event
+	})
+
+	app.SetAfterDrawFunc(func(screen tcell.Screen) {
+		_, h := screen.Size()
+		backend.PAGE_ROWS = h - 5
 	})
 
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {

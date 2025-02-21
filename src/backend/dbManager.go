@@ -13,7 +13,7 @@ import (
 
 var db *sql.DB
 
-const PAGE_ROWS = 15
+var PAGE_ROWS = 15
 
 // prepared statements
 var insInvStmt *sql.Stmt
