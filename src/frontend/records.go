@@ -38,12 +38,14 @@ func setRecTableKeybinds(t *updatableTable, rf recordForm) {
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
-			backend.DeleteRecord(id)
-			t.update(t.fGetData(t.curPage))
-			// set focus if deleted last row
-			if row > t.GetRowCount()-1 {
-				t.Select(max(0, row-1), 0)
-			}
+			showModal("Confirm delete? (y/n)", func() {
+				backend.DeleteRecord(id)
+				t.update(t.fGetData(t.curPage))
+				// set focus if deleted last row
+				if row > t.GetRowCount()-1 {
+					t.Select(max(0, row-1), 0)
+				}
+			}, t)
 		} else if event.Rune() == 'e' { // edit record
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)

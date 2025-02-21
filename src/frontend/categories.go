@@ -35,12 +35,14 @@ func setCatTableKeybinds(t *updatableTable, cf categoryForm) {
 		} else if event.Rune() == 'd' { // delete category
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)
-			backend.DeleteCategory(id)
-			t.update(t.fGetData(t.curPage))
-			// set focus if deleted last row
-			if row > t.GetRowCount()-1 {
-				t.Select(max(0, row-1), 0)
-			}
+			showModal("Confirm delete? (y/n)", func() {
+				backend.DeleteCategory(id)
+				t.update(t.fGetData(t.curPage))
+				// set focus if deleted last row
+				if row > t.GetRowCount()-1 {
+					t.Select(max(0, row-1), 0)
+				}
+			}, t)
 		} else if event.Rune() == 'e' { // edit category
 			row, _ := t.GetSelection()
 			id := t.getCellInt(row, 0)

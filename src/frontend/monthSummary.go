@@ -42,8 +42,14 @@ func setMonthGridKeybinds(mv *monthGridView, rf recordForm) {
 		} else if event.Rune() == 'd' { // delete record
 			row, _ := mv.table.GetSelection()
 			id := mv.table.getCellInt(row, 0)
-			backend.DeleteRecord(id)
-			mv.update(mv.fGetData(mv.getCurPage()))
+			showModal("Confirm delete? (y/n)", func() {
+				backend.DeleteRecord(id)
+				mv.update(mv.fGetData(mv.getCurPage()))
+				// set focus if deleted last row
+				if row > mv.table.GetRowCount()-1 {
+					mv.table.Select(max(0, row-1), 0)
+				}
+			}, mv)
 		} else if event.Rune() == 'e' { // edit record
 			row, _ := mv.table.GetSelection()
 			id := mv.table.getCellInt(row, 0)

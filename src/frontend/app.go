@@ -11,6 +11,7 @@ var (
 	pages       *tview.Pages
 	flex        *tview.Flex
 	optionsList *tview.List
+	modalText   *tview.TextView
 )
 
 func CreateTUI() {
@@ -44,6 +45,7 @@ func CreateTUI() {
 	setInvSummaryTableKeybinds(invSummary)
 
 	createHomepage(recTable, catTable, invTable, invSummary, monthView, yearView)
+	createModal()
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// ctrl+D to exit, or any typical 'back' key when on option select page
@@ -53,7 +55,7 @@ func CreateTUI() {
 			return nil
 		} else if event.Key() == tcell.KeyCtrlC { // disable default behaviour (exit app)
 			return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
-		} else if flex.GetItemCount() < 3 {
+		} else if !modalText.HasFocus() && flex.GetItemCount() < 3 {
 			switch event.Rune() {
 			case 'y':
 				optionsList.SetCurrentItem(0)
@@ -83,6 +85,41 @@ func CreateTUI() {
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func createModal() {
+	modal := func(p tview.Primitive, width, height int) *tview.Flex {
+		return tview.NewFlex().
+			AddItem(nil, 0, 1, false).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+				AddItem(nil, 0, 1, false).
+				AddItem(p, height, 1, true).
+				AddItem(nil, 0, 1, false), width, 1, true).
+			AddItem(nil, 0, 1, false)
+	}
+	modalText = tview.NewTextView().SetTextAlign(tview.AlignCenter)
+	modalText.
+		SetBackgroundColor(tview.Styles.MoreContrastBackgroundColor).
+		SetBorder(true)
+	pages.AddPage("modal", modal(modalText, 50, 3), true, false)
+}
+
+func showModal(s string, actionFunc func(), prev tview.Primitive) {
+	modalText.SetText(s).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'n' || event.Rune() == 'N' || isBackKey(event) {
+			pages.HidePage("modal")
+		} else if event.Rune() == 'y' || event.Rune() == 'Y' {
+			actionFunc()
+		} else {
+			return event
+		}
+		pages.HidePage("modal")
+		app.SetFocus(prev)
+		return nil
+	})
+
+	pages.ShowPage("modal")
+	app.SetFocus(modalText)
 }
 
 func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, monthView *monthGridView, yearView *yearView) {
