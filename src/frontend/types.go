@@ -86,8 +86,9 @@ func (t *updatableTable) update(rows []backend.DataRow) {
 	for i, row := range rows {
 		for j, str := range row.SpreadToStrings() {
 			newCell := tview.NewTableCell(" " + str + " ")
-			// set text colour red/green gradient for money cells
-			if strings.Contains(str, "$") {
+			if strings.Contains(str, "#") { // use '#' symbol anywhere to leave as default colour
+				newCell.SetText(strings.Replace(newCell.Text, "#", "", 1))
+			} else if strings.Contains(str, "$") { // set text colour red/green gradient for money cells
 				r, g, b := tview.Styles.PrimaryTextColor.RGB()
 				if f, err := strconv.ParseFloat(strings.Trim(str, " $"), 32); err == nil {
 					fInt := int32(f)

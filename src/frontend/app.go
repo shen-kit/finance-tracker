@@ -54,12 +54,12 @@ func CreateTUI() {
 			return tcell.NewEventKey(tcell.KeyCtrlC, 0, tcell.ModNone)
 		} else if flex.GetItemCount() < 3 {
 			switch event.Rune() {
-			case 'm':
-				optionsList.SetCurrentItem(0)
-				focusUpdatablePrim(monthView)
 			case 'y':
-				optionsList.SetCurrentItem(1)
+				optionsList.SetCurrentItem(0)
 				focusUpdatablePrim(yearView)
+			case 'm':
+				optionsList.SetCurrentItem(1)
+				focusUpdatablePrim(monthView)
 			case 'r':
 				optionsList.SetCurrentItem(2)
 				focusUpdatablePrim(recTable)
@@ -86,9 +86,8 @@ func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, mo
 		ShowSecondaryText(false).
 		SetHighlightFullLine(true).
 		SetSelectedBackgroundColor(tview.Styles.ContrastBackgroundColor).
-		// AddItem("  Add Record            ", "", 0, func() { showRecordForm(flex, rf, -1, "", "", "", "") }).
-		AddItem("  View Month Summary", "month", 0, func() { focusUpdatablePrim(monthView) }).
 		AddItem("  View Year Summary", "year", 0, func() { focusUpdatablePrim(yearView) }).
+		AddItem("  View Month Summary", "month", 0, func() { focusUpdatablePrim(monthView) }).
 		AddItem("  Records", "records", 0, func() { focusUpdatablePrim(recTable) }).
 		AddItem("  Categories", "categories", 0, func() { focusUpdatablePrim(catTable) }).
 		AddItem("  Investments", "investments", 0, func() { focusUpdatablePrim(invTable) }).
@@ -98,10 +97,10 @@ func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, mo
 	optionsList.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		clearScreen()
 		switch secondaryText {
-		case "month":
-			showUpdatablePrim(monthView)
 		case "year":
 			showUpdatablePrim(yearView)
+		case "month":
+			showUpdatablePrim(monthView)
 		case "records":
 			showUpdatablePrim(recTable)
 		case "categories":
@@ -135,13 +134,13 @@ func createHomepage(recTable, catTable, invTable, invSummary *updatableTable, mo
 		SetBlurFunc(func() { optionsList.SetBorderColor(tview.Styles.BorderColor) })
 
 	flex.AddItem(optionsList, 30, 0, true)
-	showUpdatablePrim(monthView)
+	optionsList.SetCurrentItem(1) // default to month view
 
 	pages.AddPage("main", flex, true, true)
 }
 
 func setTheme() {
-	// frappe -> https://catppuccin.com/palette
+	// https://catppuccin.com/palette (frappe)
 	tview.Styles = tview.Theme{
 		PrimitiveBackgroundColor:    tcell.NewRGBColor(48, 52, 70),    // Main background color for primitives.
 		ContrastBackgroundColor:     tcell.NewRGBColor(129, 200, 190), // Background color for contrasting elements.
