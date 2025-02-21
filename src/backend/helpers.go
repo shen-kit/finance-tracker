@@ -24,7 +24,7 @@ func getMonthStartAndEnd(t time.Time) (time.Time, time.Time) {
 }
 
 // returns a string right-aligned, with '  $amt.xx' format
-func rightAlignText(amt float32, decimals, width int, prefix string) string {
+func rightAlign(amt float32, decimals, width int, prefix string) string {
 	fmtStr1 := fmt.Sprintf("%%%ds", width)
 	fmtStr2 := fmt.Sprintf("%s%%.%df", prefix, decimals)
 	return fmt.Sprintf(fmtStr1, fmt.Sprintf(fmtStr2, amt))
