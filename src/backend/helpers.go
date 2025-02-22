@@ -16,10 +16,11 @@ func makeDate(year, month, day int) (time.Time, error) {
 func getMonthStartAndEnd(t time.Time) (time.Time, time.Time) {
 	year, month, _ := t.Date()
 	loc := t.Location()
-	mStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
-	mStart = mStart.Add(-time.Second)
-	mEnd := mStart.AddDate(0, 1, 0)
-	mEnd = mEnd.Add(-time.Second)
+	mStart := time.Date(year, month, 1, 0, 0, -1, 0, loc)
+	mEnd := time.Date(year, month+1, 1, 0, 0, -1, 0, loc)
+	// mStart = mStart.Add(-time.Second)
+	// mEnd := mStart.AddDate(0, 1, 0)
+	// mEnd = mEnd.Add(-time.Second)
 	return mStart, mEnd
 }
 

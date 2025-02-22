@@ -93,7 +93,7 @@ func (mv monthGridView) update(recs []backend.DataRow) {
 	mv.table.update(recs)
 }
 
-func (mv monthGridView) reset() {
+func (mv *monthGridView) reset() {
 	mv.changeMonth(-mv.monthOffset)
 	mv.table.SetBorder(false)
 }

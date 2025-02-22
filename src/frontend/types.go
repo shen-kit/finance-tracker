@@ -85,9 +85,9 @@ func (t *updatableTable) update(rows []backend.DataRow) {
 	// create table body
 	for i, row := range rows {
 		for j, str := range row.SpreadToStrings() {
-			newCell := tview.NewTableCell(" " + str + " ")
+			newCell := tview.NewTableCell(" " + str + " ").SetMaxWidth(50)
 			if strings.Contains(str, "#") { // use '#' symbol anywhere to leave as default colour
-				newCell.SetText(strings.Replace(newCell.Text, "#", "", 1))
+				newCell.SetText(strings.Replace(newCell.Text, "#", " ", 1))
 			} else if strings.Contains(str, "$") { // set text colour red/green gradient for money cells
 				r, g, b := tview.Styles.PrimaryTextColor.RGB()
 				if f, err := strconv.ParseFloat(strings.Trim(str, " $"), 32); err == nil {
@@ -127,12 +127,11 @@ func (t *updatableTable) changePage(by int) {
 func (t *updatableTable) createHeaders() {
 	t.Clear()
 	for i, h := range t.headers {
-		t.SetCell(
-			0, i,
-			tview.NewTableCell(" "+h+" ").
-				SetSelectable(false).
-				SetStyle(tcell.StyleDefault.Bold(true)),
-		)
+		newCell := tview.NewTableCell(" " + h + " ").
+			SetSelectable(false).
+			SetStyle(tcell.StyleDefault.Bold(true))
+
+		t.SetCell(0, i, newCell)
 	}
 }
 

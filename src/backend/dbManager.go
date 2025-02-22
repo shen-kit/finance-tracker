@@ -269,7 +269,7 @@ func GetRecordsFilter(opts FilterOpts) []DataRow {
           FROM record
           WHERE rec_amt BETWEEN ? AND ?
             AND rec_date >= ? AND rec_date < ?
-          ORDER BY rec_date DESC`
+          ORDER BY rec_date ASC`
 	args := []any{opts.minCost, opts.maxCost, opts.startDate, opts.endDate}
 
 	// filter by category if some are selected

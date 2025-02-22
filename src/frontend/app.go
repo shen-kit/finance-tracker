@@ -12,6 +12,7 @@ var (
 	flex        *tview.Flex
 	optionsList *tview.List
 	modalText   *tview.TextView
+	screenWidth int
 )
 
 func CreateTUI() {
@@ -77,9 +78,11 @@ func CreateTUI() {
 		return event
 	})
 
-	app.SetAfterDrawFunc(func(screen tcell.Screen) {
-		_, h := screen.Size()
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		w, h := screen.Size()
 		backend.PAGE_ROWS = h - 5
+		screenWidth = w
+		return false
 	})
 
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {
