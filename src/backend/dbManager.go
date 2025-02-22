@@ -341,9 +341,28 @@ func GetCategorySum(catId int, startDate, endDate time.Time) (float32, error) {
 
 /* Returns rows of [catName, [sum(Month)]] */
 func GetYearSummary(year int) []DataRow {
+
+	dataRowFromRows := func(rows *sql.Rows) []DataRow {
+		var res = []DataRow{}
+		var c *CategoryYear
+		for rows.Next() {
+			var cid, month, amt int
+			if err := rows.Scan(&cid, &month, &amt); err != nil {
+				panic(err)
+			}
+			if c == nil || cid != c.CatId {
+				c = &CategoryYear{CatId: cid}
+				res = append(res, c)
+			}
+			c.MonthSums[month-1] = amt
+		}
+		return res
+	}
+
+	// income categories
 	sql := `SELECT cat_id, SUBSTR(rec_date, 6, 2), SUM(rec_amt)
-          FROM record
-          WHERE SUBSTR(rec_date, 1, 4) = ?
+          FROM record NATURAL JOIN category
+          WHERE SUBSTR(rec_date, 1, 4) = ? AND cat_isincome
           GROUP BY cat_id, SUBSTR(rec_date, 6, 2)
           ORDER BY cat_id, SUBSTR(rec_date, 6, 2) ASC;`
 	rows, err := db.Query(sql, fmt.Sprint(year))
@@ -351,20 +370,55 @@ func GetYearSummary(year int) []DataRow {
 		panic(err)
 	}
 	defer rows.Close()
+	var res = dataRowFromRows(rows)
+	res = append(res, &CategoryYear{CatId: -2}) // divider row
 
-	var res = []DataRow{}
-	var c *CategoryYear
-	for rows.Next() {
-		var cid, month, amt int
-		if err := rows.Scan(&cid, &month, &amt); err != nil {
-			panic(err)
-		}
-		if c == nil || cid != c.CatId {
-			c = &CategoryYear{CatId: cid}
-			res = append(res, c)
-		}
-		c.MonthSums[month-1] = amt
+	// total income
+	sql_totals := `SELECT -3, SUBSTR(rec_date, 6, 2), SUM(rec_amt)
+         FROM record NATURAL JOIN category
+         WHERE SUBSTR(rec_date, 1, 4) = ? AND cat_isincome
+         GROUP BY SUBSTR(rec_date, 6, 2)
+         ORDER BY SUBSTR(rec_date, 6, 2) ASC;`
+	rows, err = db.Query(sql_totals, fmt.Sprint(year))
+	if err != nil {
+		panic(err)
 	}
+	defer rows.Close()
+	res = append(res, dataRowFromRows(rows)...)
+	res = append(res, &CategoryYear{CatId: -2}) // divider row
+
+	// expenditure categories
+	sql = strings.Replace(sql, "cat_isincome", "NOT cat_isincome", 1)
+	rows, err = db.Query(sql, fmt.Sprint(year))
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	res = append(res, dataRowFromRows(rows)...)
+	res = append(res, &CategoryYear{CatId: -2}) // divider row
+
+	// total expenditure
+	sql_totals = strings.Replace(sql_totals, "-3", "-4", 1)
+	sql_totals = strings.Replace(sql_totals, "cat_isincome", "NOT cat_isincome", 1)
+	rows, err = db.Query(sql_totals, fmt.Sprint(year))
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	res = append(res, dataRowFromRows(rows)...)
+
+	res = append(res, &CategoryYear{CatId: -2}) // divider row
+
+	// net change
+	sql_totals = strings.Replace(sql_totals, "-4", "0", 1)
+	sql_totals = strings.Replace(sql_totals, "AND NOT cat_isincome", "", 1)
+	rows, err = db.Query(sql_totals, fmt.Sprint(year))
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	res = append(res, dataRowFromRows(rows)...)
+
 	return res
 }
 
@@ -433,12 +487,22 @@ func GetRecordsMaxPage() int {
 }
 
 func GetCategoryNameFromId(catId int) string {
-	if catId == -1 {
+	switch catId {
+	case 0:
+		return "[orange::b:]Net Change"
+	case -1:
 		return "(deleted)"
+	case -2:
+		return ""
+	case -3:
+		return "[orange]Total Income"
+	case -4:
+		return "[orange]Total Expenditure"
+	default:
+		var res string
+		db.QueryRow("SELECT cat_name FROM category WHERE cat_id = ?", catId).Scan(&res)
+		return res
 	}
-	var res string
-	db.QueryRow("SELECT cat_name FROM category WHERE cat_id = ?", catId).Scan(&res)
-	return res
 }
 
 func GetCategoryIdFromName(catName string) int {

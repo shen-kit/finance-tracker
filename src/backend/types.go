@@ -34,7 +34,7 @@ func (rec Record) SpreadToStrings() []string {
 }
 
 type Category struct {
-	Id       int
+	Id       int // special: 0 = "Net Change" | -1 = "Deleted" | -2 = blank
 	Name     string
 	IsIncome bool
 	Desc     string
@@ -139,6 +139,9 @@ type CategoryYear struct {
 }
 
 func (cy CategoryYear) SpreadToStrings() []string {
+	if cy.CatId == -2 { // blank line
+		return []string{"-----------------", "------", "------", "------", "------", "------", "------", "------", "------", "------", "------", "------", "------"}
+	}
 	var res = make([]string, 13, 13)
 	res[0] = GetCategoryNameFromId(cy.CatId)
 	for i, val := range cy.MonthSums {
