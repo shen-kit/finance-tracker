@@ -73,7 +73,7 @@ For all views except forms
 */
 func isBackKey(event *tcell.EventKey) bool {
 	return event.Rune() == 'q' ||
-		event.Rune() == 'h' ||
+		// event.Rune() == 'h' ||
 		event.Key() == tcell.KeyCtrlC ||
 		event.Key() == tcell.KeyCtrlQ ||
 		event.Key() == tcell.KeyEscape
