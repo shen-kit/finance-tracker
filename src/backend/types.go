@@ -34,7 +34,7 @@ func (rec Record) SpreadToStrings() []string {
 }
 
 type Category struct {
-	Id       int // special: 0 = "Net Change" | -1 = "Deleted" | -2 = blank
+	Id       int // special: 0 = "Net Change" | -1 = "Deleted" | -2 = blank | -3 = "Total Income" | -4 = "Total Expenditure"
 	Name     string
 	IsIncome bool
 	Desc     string
@@ -158,18 +158,34 @@ type InvSummaryRow struct {
 }
 
 func (isr InvSummaryRow) SpreadToStrings() []string {
+	if isr.code == "separator" {
+		return []string{"------", "------", "-------------", "-------------", "----------", "-------------", "---------", "-------"}
+	}
+
 	avgBuyF := float32(isr.avgBuy) / 100
+
+	if isr.code == "total" {
+		return []string{
+			"Total",
+			"", "", "", // qty, avg buy, cur price
+			"#" + rightAlign(avgBuyF, 2, 9, "$"),                           // total in
+			"#" + rightAlign(isr.curPrice, 2, 12, "$"),                     // current value
+			rightAlign(isr.curPrice-avgBuyF, 2, 9, "$"),                    // P/L
+			rightAlign(100*(isr.curPrice-avgBuyF)/avgBuyF, 2, 6, "") + "%", // %P/L
+		}
+	}
+
 	totalIn := avgBuyF * isr.qty
 	curVal := isr.curPrice * isr.qty
 	return []string{
 		isr.code,                                                 // code
 		rightAlign(isr.qty, 2, 6, ""),                            // qty
-		"#" + rightAlign(avgBuyF, 2, 13, "$"),                    // avg buy
-		"#" + rightAlign(isr.curPrice, 2, 13, "$"),               // cur price
+		"#" + rightAlign(avgBuyF, 2, 12, "$"),                    // avg buy
+		"#" + rightAlign(isr.curPrice, 2, 12, "$"),               // cur price
 		"#" + rightAlign(totalIn, 2, 9, "$"),                     // total in
-		"#" + rightAlign(curVal, 2, 13, "$"),                     // current val
+		"#" + rightAlign(curVal, 2, 12, "$"),                     // current val
 		rightAlign(curVal-totalIn, 2, 9, "$"),                    // P/L
-		rightAlign(100*(curVal-totalIn)/totalIn, 2, 7, "") + "%", // %P/L
+		rightAlign(100*(curVal-totalIn)/totalIn, 2, 6, "") + "%", // %P/L
 	}
 }
 

@@ -445,6 +445,8 @@ func GetInvestmentSummary() []DataRow {
 	}
 	rows.Close()
 
+	var totalValue float32 = 0
+	var totalBuy int = 0
 	for i := range len(invRows) {
 
 		// only update once per day maximum
@@ -462,12 +464,18 @@ func GetInvestmentSummary() []DataRow {
 				panic(err)
 			}
 		}
+		totalValue += invRows[i].curPrice * invRows[i].qty
+		totalBuy += invRows[i].avgBuy * int(invRows[i].qty)
 	}
 
 	dRows := make([]DataRow, len(invRows))
 	for i, v := range invRows {
 		dRows[i] = v
 	}
+
+	// add total row if any investments made
+	dRows = append(dRows, InvSummaryRow{code: "separator"})
+	dRows = append(dRows, InvSummaryRow{code: "total", curPrice: totalValue, avgBuy: totalBuy})
 
 	return dRows
 }
