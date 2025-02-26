@@ -68,7 +68,7 @@ As the database is stored separately to the app, the app can simply be updated b
     - `c`: categories
     - `i`: investments
 
-#### Note on Investments
+### Note on Investments
 
 Investment data is pulled from [yahoo finance](https://au.finance.yahoo.com/). The stock code must match the stock code in yahoo finance for the particular stock. This can be found by searching for your stock on the yahoo finance website, and is important to get an accurate investment summary view.
 
