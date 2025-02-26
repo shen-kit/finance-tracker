@@ -4,6 +4,16 @@
 
 This is a TUI finance tracker written in Go, using a sqlite database.
 
+## Screenshots
+
+![year summary](screenshots/year-summary.png)
+![month summary](screenshots/month-summary.png)
+![add record](screenshots/month-summary-add.png)
+![records](screenshots/records.png)
+![categories-edit](screenshots/categories-edit.png)
+![investments](screenshots/investments.png)
+![investment summary](screenshots/investment-summary.png)
+
 ## Features
 
 - [ ] income / expenditure:
