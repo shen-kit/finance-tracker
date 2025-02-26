@@ -2,6 +2,10 @@
 
 This is a TUI finance tracker written in Go, using a sqlite database.
 
+## Known Bugs (currently working to fix)
+
+- app crashes if invalid stock code entered
+
 ## Screenshots
 
 ![year summary](screenshots/year-summary.png)
@@ -12,31 +16,33 @@ This is a TUI finance tracker written in Go, using a sqlite database.
 ![investments](screenshots/investments.png)
 ![investment summary](screenshots/investment-summary.png)
 
-## Features
+## Quick Start
 
-- [ ] income / expenditure:
-	- [X] record income/expenditure
-	- [ ] use custom categories to query , e.g. charts of income/expenditure over time for a given category
-	- [ ] filterable and sortable table view
-- [X] investments:
-	- [X] record buying/selling, and the buy/sell price
-	- [X] gets the current stock price to show current value, profit/loss, etc.
-- [X] summary displays:
-	- [X] monthly summary of all records, total income/expenditure, and net value change
-	- [X] yearly summary with totals by month and category
-	- [X] investment summary, total quantity, average buy + current price, P/L, %P/L
-- [X] responsive to terminal size
+### Installation and Running the App
 
-## Instructions
+#### Linux
 
-### Running the App
+1. Download the [finance-tracker](./finance-tracker) file
+2. Open a terminal in the same directory, run `chmod +x finance-tracker`
+3. Run the app using `./finance-tracker <path_to_db>`
+    - choose any path you want to, may be relative or absolute
+    - if the database doesn't exist yet, a new one will be created
+    - if one already exists it will be opened
+
+#### Bash Alias
+
+To run the app without having to type in the full command each time, it is recommended to create an alias in your `.bashrc` file. This may look something like the following: `alias finances="finance-tracker ~/personal_documents/finances/finance-tracker.db"`. Once this is set up, the finance tracker may be started by running `finances` in the terminal.
+
+### Instructions
+
+#### Running the App
 
 - run `$ finance-tracker <path-to-database>`
     - `$ finance-tracker test.db`
     - `$ finance-tracker ~/folder1/folder2/test.db`
 - creates a database if one doesn't exist at the path, if not opens the existing one
 
-### Controls (arrows or vim motions)
+#### Controls (arrows or vim motions)
 
 - navigation:
     - `j`/`k`/`↑`/`↓`/`g`/`G`: navigate lists/tables
@@ -58,6 +64,24 @@ This is a TUI finance tracker written in Go, using a sqlite database.
     - `c`: categories
     - `i`: investments
 
-## Other Notes
+#### Note on Investments
 
-+ the database is normalised to 3NF to minimise data anomalies
+Investment data is pulled from [yahoo finance](https://au.finance.yahoo.com/). The stock code must match the stock code in yahoo finance for the particular stock. This can be found by searching for your stock on the yahoo finance website, and is important to get an accurate investment summary view.
+
+Investment data is updated once daily and cached in the database. This makes the app more responsive when switching tabs.
+
+## Features
+
+- [ ] income / expenditure:
+	- [X] record income/expenditure
+	- [ ] use custom categories to query , e.g. charts of income/expenditure over time for a given category
+	- [ ] filterable and sortable table view
+- [X] investments:
+	- [X] record buying/selling, and the buy/sell price
+	- [X] gets the current stock price to show current value, profit/loss, etc.
+- [X] summary displays:
+	- [X] monthly summary of all records, total income/expenditure, and net value change
+	- [X] yearly summary with totals by month and category
+	- [X] investment summary, total quantity, average buy + current price, P/L, %P/L
+- [X] responsive to terminal size
+
