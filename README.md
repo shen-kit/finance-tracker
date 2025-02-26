@@ -1,7 +1,5 @@
 # Finance Tracker
 
-> In Development!!
-
 This is a TUI finance tracker written in Go, using a sqlite database.
 
 ## Screenshots
