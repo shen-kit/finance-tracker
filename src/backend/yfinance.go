@@ -57,8 +57,8 @@ func GetCurrentStockPrice(symbol string) (float32, error) {
 	}
 
 	// no price returned from backend
-	if len(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose) == 0 {
-		return -2, nil
+	if len(res.Chart.Result) == 0 || len(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose) == 0 {
+		return 0, nil
 	}
 	return float32(res.Chart.Result[0].Indicators.AdjClose[0].AdjClose[0]), nil
 }
