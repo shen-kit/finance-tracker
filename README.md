@@ -1,6 +1,10 @@
 # Finance Tracker
 
-This is a TUI finance tracker written in Go, using a sqlite database.
+A TUI finance tracker written in Go, using a sqlite database.
+
+- Record your income and expenditure with custom categories, and see summaries in dashboard views for each month and year
+- Record your investments, and see your profits with current stock prices pulled daily from [yahoo finance](https://au.finance.yahoo.com/)
+- No financial data is stored within the app, everything is on a sqlite database which you can store anywhere for security and your peace of mind
 
 ## Known Bugs (currently working to fix)
 
