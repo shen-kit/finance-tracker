@@ -152,22 +152,30 @@ func SetupDb(path string) {
 }
 
 func CreateDummyData() {
-	startDate, _ := makeDate(2024, 11, 1)
+	startDate, _ := makeDate(2023, 01, 1)
 
 	// investments
-	for range 15 {
+	for range 5 {
 		InsertInvestment(Investment{
-			Date:      startDate.AddDate(0, 0, rand.Intn(100)),
+			Date:      startDate.AddDate(rand.Intn(2), rand.Intn(13), rand.Intn(32)),
 			Code:      "IVV",
 			Qty:       float32(rand.Intn(100)),
-			Unitprice: rand.Intn(60000),
+			Unitprice: rand.Intn(70000),
 		})
 	}
-	for range 15 {
+	for range 5 {
 		InsertInvestment(Investment{
-			Date:      startDate.AddDate(0, 0, rand.Intn(100)),
+			Date:      startDate.AddDate(rand.Intn(2), rand.Intn(13), rand.Intn(32)),
 			Code:      "VGS.AX",
-			Qty:       float32(rand.Intn(500)),
+			Qty:       float32(rand.Intn(100)),
+			Unitprice: rand.Intn(30000),
+		})
+	}
+	for range 5 {
+		InsertInvestment(Investment{
+			Date:      startDate.AddDate(rand.Intn(2), rand.Intn(13), rand.Intn(32)),
+			Code:      "NDQ.AX",
+			Qty:       float32(rand.Intn(100)),
 			Unitprice: rand.Intn(20000),
 		})
 	}
@@ -175,30 +183,33 @@ func CreateDummyData() {
 	// categories
 	categories := [...]Category{
 		{Name: "Work", IsIncome: true, Desc: "income from work"},
-		{Name: "Allowance", IsIncome: true, Desc: "allowance from parents"},
+		{Name: "Other income", IsIncome: true, Desc: "dividends, prizes, lottery (if only)"},
+		{Name: "Rent", IsIncome: false, Desc: "rip wallet :("},
 		{Name: "Groceries", IsIncome: false, Desc: "groceries"},
 		{Name: "Entertainment", IsIncome: false, Desc: "eating out, experiences, spending for fun"},
+		{Name: "Shopping", IsIncome: false, Desc: "shopping for myself"},
 		{Name: "Gifts", IsIncome: false, Desc: "buying presents for others"},
+		{Name: "Other expenditure", IsIncome: false, Desc: "other spending"},
 	}
 	for _, cat := range categories {
 		InsertCategory(cat)
 	}
 
 	// records
-	for i := range 20 { // income
+	for i := range 120 { // income
 		InsertRecord(Record{
-			Date:  startDate.AddDate(0, 0, rand.Intn(100)),
+			Date:  startDate.AddDate(rand.Intn(2), rand.Intn(13), rand.Intn(32)),
 			Desc:  "dummy income record " + fmt.Sprint(i),
 			Amt:   600 + rand.Intn(70000),
 			CatId: rand.Intn(2) + 1,
 		})
 	}
-	for i := range 80 { // expenditure
+	for i := range 500 { // expenditure
 		InsertRecord(Record{
-			Date:  startDate.AddDate(0, 0, rand.Intn(100)),
+			Date:  startDate.AddDate(rand.Intn(2), rand.Intn(13), rand.Intn(32)),
 			Desc:  "dummy expenditure record " + fmt.Sprint(i),
 			Amt:   -rand.Intn(20000),
-			CatId: rand.Intn(2) + 3,
+			CatId: rand.Intn(6) + 3,
 		})
 	}
 
