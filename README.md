@@ -4,7 +4,7 @@ This is a TUI finance tracker written in Go, using a sqlite database.
 
 ## Known Bugs (currently working to fix)
 
-- app crashes if invalid stock code entered
+- none (please submit a bug report if any are found!)
 
 ## Screenshots
 
@@ -18,7 +18,7 @@ This is a TUI finance tracker written in Go, using a sqlite database.
 
 ## Quick Start
 
-### Installation and Running the App
+### Installation
 
 #### Linux
 
@@ -32,6 +32,10 @@ This is a TUI finance tracker written in Go, using a sqlite database.
 #### Bash Alias
 
 To run the app without having to type in the full command each time, it is recommended to create an alias in your `.bashrc` file. This may look something like the following: `alias finances="finance-tracker ~/personal_documents/finances/finance-tracker.db"`. Once this is set up, the finance tracker may be started by running `finances` in the terminal.
+
+### Updating
+
+As the database is stored separately to the app, the app can simply be updated by downloading the latest version of the executable and replacing the old executable with the new one.
 
 ### Instructions
 
